@@ -4,8 +4,14 @@ let allLeads = [];
 
 // --- UI HELPERS ---
 window.openModal = (id) => {
-    if(id === 'taskModal') { document.getElementById('tEditId').value = ""; document.getElementById('taskTitleHeader').innerText = "New Task"; }
-    if(id === 'apptModal') { document.getElementById('aEditId').value = ""; document.getElementById('apptTitleHeader').innerText = "New Appointment"; }
+    if(id === 'taskModal') { 
+        document.getElementById('tEditId').value = ""; 
+        document.getElementById('taskTitleHeader').innerText = "New Task"; 
+    }
+    if(id === 'apptModal') { 
+        document.getElementById('aEditId').value = ""; 
+        document.getElementById('apptTitleHeader').innerText = "New Appointment"; 
+    }
     document.getElementById(id).classList.remove('hidden');
 };
 window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
@@ -110,10 +116,15 @@ window.editAppt = async (id) => {
 // --- SAVE LOGIC ---
 document.getElementById('saveLeadBtn').onclick = async () => {
     const payload = { 
-        name: document.getElementById('lName').value, phone: document.getElementById('lPhone').value, 
-        email: document.getElementById('lEmail').value, address: document.getElementById('lAddress').value,
-        zip_code: document.getElementById('lZip').value, state: document.getElementById('lState').value,
-        notes: document.getElementById('lNotes').value, status: 'New', last_activity: new Date().toISOString() 
+        name: document.getElementById('lName').value, 
+        phone: document.getElementById('lPhone').value, 
+        email: document.getElementById('lEmail').value, 
+        address: document.getElementById('lAddress').value,
+        zip_code: document.getElementById('lZip').value, 
+        state: document.getElementById('lState').value,
+        notes: document.getElementById('lNotes').value, 
+        status: 'New', 
+        last_activity: new Date().toISOString() 
     };
     const { error } = await supabase.from('leads').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('leadModal'); loadData(); }
@@ -121,14 +132,23 @@ document.getElementById('saveLeadBtn').onclick = async () => {
 
 document.getElementById('saveTaskBtn').onclick = async () => {
     const editId = document.getElementById('tEditId').value;
-    const payload = { title: document.getElementById('tTitle').value, priority: document.getElementById('tPriority').value, lead_id: document.getElementById('tLeadId').value || null, due_date: document.getElementById('tDate').value };
+    const payload = { 
+        title: document.getElementById('tTitle').value, 
+        priority: document.getElementById('tPriority').value, 
+        lead_id: document.getElementById('tLeadId').value || null, 
+        due_date: document.getElementById('tDate').value 
+    };
     const { error } = editId ? await supabase.from('tasks').update(payload).eq('id', editId) : await supabase.from('tasks').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('taskModal'); loadData(); }
 };
 
 document.getElementById('saveApptBtn').onclick = async () => {
     const editId = document.getElementById('aEditId').value;
-    const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
+    const payload = { 
+        title: document.getElementById('aTitle').value, 
+        appt_date: document.getElementById('aDate').value, 
+        lead_id: document.getElementById('aLeadId').value || null 
+    };
     const { error } = editId ? await supabase.from('appointments').update(payload).eq('id', editId) : await supabase.from('appointments').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('apptModal'); loadData(); }
 };
@@ -141,7 +161,7 @@ function renderTasks(list) {
                 <span class="text-[10px] font-bold uppercase text-slate-400">${t.priority} Priority</span>
                 <div class="flex gap-2">
                     <button onclick="window.editTask('${t.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit"></i></button>
-                    <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fa fa-check-circle text-xl"></i></button>
+                    <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-check-circle text-xl"></i></button>
                 </div>
             </div>
             <h4 class="font-bold text-slate-800">${t.title}</h4>
@@ -156,7 +176,11 @@ function renderAppts(list) {
         <div class="bg-white p-6 rounded-[2rem] border border-slate-100 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-6">
                 <div class="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div>
-                <div><h4 class="font-bold text-slate-800 text-lg">${a.title}</h4><p class="text-xs text-slate-500 font-bold uppercase">Lead: ${a.leads ? a.leads.name : 'N/A'}</p><p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">${new Date(a.appt_date).toLocaleString()}</p></div>
+                <div>
+                    <h4 class="font-bold text-slate-800 text-lg">${a.title}</h4>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Lead: ${a.leads ? a.leads.name : 'N/A'}</p>
+                    <p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">${new Date(a.appt_date).toLocaleString()}</p>
+                </div>
             </div>
             <div class="flex gap-4 px-4">
                 <button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit text-xl"></i></button>
