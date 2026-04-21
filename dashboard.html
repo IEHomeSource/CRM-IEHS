@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HomeSource CRM | Dashboard</title>
+    <title>Dashboard | IEHomeSource CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -17,24 +17,24 @@
 <body class="bg-slate-50 text-slate-800 font-sans">
 
     <div class="flex h-screen overflow-hidden">
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR (GHL NAVY STYLE) -->
         <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full shadow-2xl">
-            <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center gap-2">
-                <i class="fa fa-rocket text-blue-500"></i> CRM ALPHA
+            <div class="p-6 text-lg font-bold text-white border-b border-slate-800 flex items-center gap-2">
+                <i class="fa fa-house-chimney text-blue-500"></i> IEHomeSource
             </div>
             <nav class="flex-1 mt-4 px-3 space-y-1">
-                <p class="text-[10px] font-bold text-slate-500 px-3 uppercase mb-2">Main Menu</p>
-                <button onclick="showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                <p class="text-[10px] font-bold text-slate-500 px-3 uppercase mb-2 tracking-widest">Main Menu</p>
+                <button onclick="showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition text-sm">
                     <i class="fa fa-users w-5 mr-3"></i> Leads
                 </button>
-                <button onclick="showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
-                    <i class="fa fa-list-check w-5 mr-3"></i> Team Tasks
+                <button onclick="showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition text-sm">
+                    <i class="fa fa-list-check w-5 mr-3"></i> Tasks
                 </button>
                 
-                <div id="tagsListNav" class="mt-8">
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase mb-2">Smart Lists (Tags)</p>
-                    <button onclick="filterByTag('all')" class="w-full flex items-center py-2 px-4 text-xs hover:text-white italic">Show All Leads</button>
-                    <!-- Tags will appear here -->
+                <div id="tagsListNav" class="mt-8 border-t border-slate-800 pt-4">
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Smart Lists (Tags)</p>
+                    <button onclick="filterByTag('all')" class="w-full text-left py-2 px-4 text-[12px] hover:text-white transition">Show All Leads</button>
+                    <!-- Tags dynamic list -->
                 </div>
             </nav>
             <div class="p-4 border-t border-slate-800">
@@ -42,42 +42,38 @@
             </div>
         </aside>
 
-        <!-- MAIN -->
+        <!-- MAIN AREA -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- HEADER -->
-            <header class="h-16 bg-white border-b flex items-center justify-between px-8 sticky top-0 z-10">
-                <h2 id="viewTitle" class="text-lg font-bold text-slate-700">All Leads</h2>
+            <header class="h-16 bg-white border-b flex items-center justify-between px-8 sticky top-0 z-10 shadow-sm">
+                <h2 id="viewTitle" class="text-lg font-bold text-slate-700 uppercase tracking-tight">All Leads</h2>
                 <div class="flex items-center gap-3">
-                    <!-- SEARCH -->
                     <div class="relative">
                         <i class="fa fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
-                        <input type="text" id="searchInput" placeholder="Search by name or phone..." class="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-xs outline-none w-48 focus:w-64 transition-all">
+                        <input type="text" id="searchInput" placeholder="Search contact..." class="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-xs outline-none w-48 focus:w-64 transition-all">
                     </div>
-                    <!-- IMPORT CSV -->
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
                     <button onclick="document.getElementById('csvFileInput').click()" class="bg-white border border-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-50 transition">
-                        <i class="fa fa-file-import mr-1"></i> Bulk Import
+                        <i class="fa fa-file-import mr-1 text-emerald-500"></i> Import
                     </button>
-                    <!-- NEW LEAD -->
-                    <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                    <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-700 transition">
                         + New Lead
                     </button>
                 </div>
             </header>
 
             <div class="p-8">
-                <!-- STATS CARDS (COUNTER) -->
+                <!-- KPI CARDS -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">Total Leads</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Contacts</p>
                         <h3 class="text-3xl font-bold mt-1" id="totalCount">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">Active Tasks</p>
-                        <h3 class="text-3xl font-bold mt-1" id="taskCount">0</h3>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Tasks</p>
+                        <h3 class="text-3xl font-bold mt-1" id="taskCountDisplay">0</h3>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">Closed Deals</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Closed Deals</p>
                         <h3 class="text-3xl font-bold mt-1 text-emerald-600" id="closedCount">0</h3>
                     </div>
                 </div>
@@ -88,11 +84,10 @@
                         <table class="w-full text-left">
                             <thead class="bg-slate-50 border-b text-[10px] uppercase font-bold text-slate-400">
                                 <tr>
-                                    <th class="p-4">Contact Info</th>
+                                    <th class="p-4">Lead Info</th>
+                                    <th class="p-4">Phone</th>
                                     <th class="p-4">Location</th>
-                                    <th class="p-4">Phone (Unique)</th>
                                     <th class="p-4">Tags</th>
-                                    <th class="p-4">Status</th>
                                     <th class="p-4 text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -104,8 +99,8 @@
                 <!-- TASKS SECTION -->
                 <section id="sectionTasks" class="section">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold">Team Tasks</h3>
-                        <button onclick="openModal('taskModal')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">+ New Task</button>
+                        <h3 class="text-lg font-bold uppercase tracking-tight">Team Assignments</h3>
+                        <button onclick="openModal('taskModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold">+ New Task</button>
                     </div>
                     <div id="tasksList" class="grid grid-cols-1 gap-3">
                         <!-- Tasks go here -->
@@ -115,14 +110,14 @@
         </main>
     </div>
 
-    <!-- MODAL: DETAILED LEAD FORM -->
-    <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+    <!-- MODAL: CREATE LEAD -->
+    <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white p-8 rounded-2xl w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
             <h3 class="text-xl font-bold mb-6">Create New Contact</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" id="lName" placeholder="Full Name" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 border rounded-xl outline-none">
-                <input type="text" id="lPhone" placeholder="Phone Number (Required)" class="w-full p-3 border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                <input type="text" id="lPhone" placeholder="Phone Number" class="w-full p-3 border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold">
                 <input type="text" id="lAddress" placeholder="Address" class="w-full p-3 border rounded-xl outline-none">
                 <input type="text" id="lCity" placeholder="City" class="w-full p-3 border rounded-xl">
                 <input type="text" id="lState" placeholder="State" class="w-full p-3 border rounded-xl">
@@ -133,7 +128,7 @@
                     <option value="Closed">Closed Deal</option>
                 </select>
                 <input type="text" id="lTags" placeholder="Tags (e.g. Investor, Urgent)" class="w-full p-3 border rounded-xl col-span-2">
-                <textarea id="lNotes" placeholder="Notes..." class="w-full p-3 border rounded-xl col-span-2 h-24"></textarea>
+                <textarea id="lNotes" placeholder="Motivation & Notes..." class="w-full p-3 border rounded-xl col-span-2 h-24"></textarea>
             </div>
             <div class="flex justify-end gap-3 mt-8">
                 <button onclick="closeModal('leadModal')" class="px-6 py-2 text-slate-500 font-bold">Cancel</button>
@@ -142,9 +137,55 @@
         </div>
     </div>
 
+    <!-- MODAL: CREATE TASK -->
+    <div id="taskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Assign New Task</h3>
+            <div class="space-y-4">
+                <input type="text" id="tTitle" placeholder="What needs to be done?" class="w-full p-3 border rounded-xl outline-none">
+                <select id="tLeadId" class="w-full p-3 border rounded-xl outline-none">
+                    <option value="">Link to Lead (Optional)</option>
+                    <!-- Leads will load here -->
+                </select>
+                <input type="date" id="tDate" class="w-full p-3 border rounded-xl outline-none">
+            </div>
+            <div class="flex justify-end gap-3 mt-8">
+                <button onclick="closeModal('taskModal')" class="px-6 py-2 text-slate-500 font-bold">Cancel</button>
+                <button id="saveTaskBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">Create Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LEAD DETAIL VIEW (THE "GHL" PANEL) -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-blue-600">Contact Details</h3>
+                <button onclick="closeModal('detailModal')" class="text-slate-400"><i class="fa fa-times text-xl"></i></button>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="text-[10px] font-bold text-slate-400">NAME</label><input type="text" id="eName" class="w-full p-2 border-b"></div>
+                <div><label class="text-[10px] font-bold text-slate-400">PHONE</label><input type="text" id="ePhone" class="w-full p-2 border-b font-bold"></div>
+                <div><label class="text-[10px] font-bold text-slate-400">EMAIL</label><input type="text" id="eEmail" class="w-full p-2 border-b"></div>
+                <div><label class="text-[10px] font-bold text-slate-400">STATUS</label><select id="eStatus" class="w-full p-2 border-b"><option value="New">New</option><option value="Negotiating">Negotiating</option><option value="Closed">Closed</option></select></div>
+                <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400">TAGS</label><input type="text" id="eTags" class="w-full p-2 border-b"></div>
+                <div class="col-span-2"><label class="text-[10px] font-bold text-slate-400">NOTES</label><textarea id="eNotes" class="w-full p-3 border rounded-xl h-32"></textarea></div>
+            </div>
+            <div class="flex justify-end gap-3 mt-8">
+                <button id="updateLeadBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700">Update Lead Info</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script type="module" src="app.js"></script>
     <script>
+        // Global Modal Logic
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Sidebar Navigation
         function showSection(name) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
@@ -152,8 +193,6 @@
             document.getElementById('nav' + name).classList.add('active');
             document.getElementById('viewTitle').innerText = name + " Management";
         }
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     </script>
 </body>
 </html>
