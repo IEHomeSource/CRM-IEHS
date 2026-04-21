@@ -2,83 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GHL Clone | Real Estate CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHL Pro CRM | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        .section { display: none; }
+        .section.active { display: block; }
         .sidebar-item.active { background: #1e293b; border-left: 4px solid #3b82f6; color: white; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
 
     <div class="flex h-screen overflow-hidden">
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full">
-            <div class="p-6 text-xl font-bold text-white border-b border-slate-800">CRM ALPHA</div>
-            <nav class="flex-1 mt-4 px-2">
-                <button onclick="filterByTag('all')" class="sidebar-item active w-full flex items-center py-2 px-4 rounded-lg hover:text-white">
-                    <i class="fa fa-users w-6"></i> All Leads
+        <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full shadow-2xl">
+            <div class="p-6 text-xl font-bold text-white border-b border-slate-800 flex items-center gap-2">
+                <i class="fa fa-rocket text-blue-500"></i> CRM ALPHA
+            </div>
+            <nav class="flex-1 mt-4 px-3 space-y-1">
+                <p class="text-[10px] font-bold text-slate-500 px-3 uppercase mb-2">Main Menu</p>
+                <button onclick="showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                    <i class="fa fa-users w-5 mr-3"></i> Leads
                 </button>
-                <div id="tagsListNav" class="mt-4">
-                    <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2">Filter by Tags</p>
-                    <!-- Tags will appear here dynamically -->
+                <button onclick="showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                    <i class="fa fa-list-check w-5 mr-3"></i> Team Tasks
+                </button>
+                
+                <div id="tagsListNav" class="mt-8">
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase mb-2">Smart Lists (Tags)</p>
+                    <button onclick="filterByTag('all')" class="w-full flex items-center py-2 px-4 text-xs hover:text-white italic">Show All Leads</button>
+                    <!-- Tags will appear here -->
                 </div>
             </nav>
-            <div class="p-4"><button id="logoutBtn" class="text-sm hover:text-white"><i class="fa fa-sign-out"></i> Logout</button></div>
+            <div class="p-4 border-t border-slate-800">
+                <button id="logoutBtn" class="flex items-center gap-2 text-sm hover:text-white"><i class="fa fa-sign-out"></i> Logout</button>
+            </div>
         </aside>
 
         <!-- MAIN -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-8">
-                <h2 id="viewTitle" class="text-lg font-bold">All Leads</h2>
-                <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700">+ New Lead</button>
+            <!-- HEADER -->
+            <header class="h-16 bg-white border-b flex items-center justify-between px-8 sticky top-0 z-10">
+                <h2 id="viewTitle" class="text-lg font-bold text-slate-700">All Leads</h2>
+                <div class="flex items-center gap-3">
+                    <!-- SEARCH -->
+                    <div class="relative">
+                        <i class="fa fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" placeholder="Search by name or phone..." class="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-xs outline-none w-48 focus:w-64 transition-all">
+                    </div>
+                    <!-- IMPORT CSV -->
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+                    <button onclick="document.getElementById('csvFileInput').click()" class="bg-white border border-emerald-200 text-emerald-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-50 transition">
+                        <i class="fa fa-file-import mr-1"></i> Bulk Import
+                    </button>
+                    <!-- NEW LEAD -->
+                    <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                        + New Lead
+                    </button>
+                </div>
             </header>
 
             <div class="p-8">
-                <!-- TABLE -->
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b text-[10px] uppercase font-bold text-slate-500">
-                            <tr>
-                                <th class="p-4">Lead Info</th>
-                                <th class="p-4">Location</th>
-                                <th class="p-4">Phone</th>
-                                <th class="p-4">Tags</th>
-                                <th class="p-4">Status</th>
-                                <th class="p-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leadsTableBody" class="divide-y divide-slate-100"></tbody>
-                    </table>
+                <!-- STATS CARDS (COUNTER) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase">Total Leads</p>
+                        <h3 class="text-3xl font-bold mt-1" id="totalCount">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase">Active Tasks</p>
+                        <h3 class="text-3xl font-bold mt-1" id="taskCount">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase">Closed Deals</p>
+                        <h3 class="text-3xl font-bold mt-1 text-emerald-600" id="closedCount">0</h3>
+                    </div>
                 </div>
+
+                <!-- LEADS SECTION -->
+                <section id="sectionLeads" class="section active">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 border-b text-[10px] uppercase font-bold text-slate-400">
+                                <tr>
+                                    <th class="p-4">Contact Info</th>
+                                    <th class="p-4">Location</th>
+                                    <th class="p-4">Phone (Unique)</th>
+                                    <th class="p-4">Tags</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadsTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TASKS SECTION -->
+                <section id="sectionTasks" class="section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold">Team Tasks</h3>
+                        <button onclick="openModal('taskModal')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold">+ New Task</button>
+                    </div>
+                    <div id="tasksList" class="grid grid-cols-1 gap-3">
+                        <!-- Tasks go here -->
+                    </div>
+                </section>
             </div>
         </main>
     </div>
 
-    <!-- MODAL: ADD LEAD (GHL Detailed Form) -->
+    <!-- MODAL: DETAILED LEAD FORM -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-2xl w-full max-w-2xl shadow-2xl">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
             <h3 class="text-xl font-bold mb-6">Create New Contact</h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" id="lName" placeholder="Full Name" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="lPhone" placeholder="Phone Number (Unique)" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="lAddress" placeholder="Address" class="w-full p-3 border rounded-xl">
+                <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 border rounded-xl outline-none">
+                <input type="text" id="lPhone" placeholder="Phone Number (Required)" class="w-full p-3 border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                <input type="text" id="lAddress" placeholder="Address" class="w-full p-3 border rounded-xl outline-none">
                 <input type="text" id="lCity" placeholder="City" class="w-full p-3 border rounded-xl">
                 <input type="text" id="lState" placeholder="State" class="w-full p-3 border rounded-xl">
                 <input type="text" id="lZip" placeholder="Zip Code" class="w-full p-3 border rounded-xl">
-                <input type="text" id="lTags" placeholder="Tags (comma separated)" class="w-full p-3 border rounded-xl">
-                <textarea id="lNotes" placeholder="Notes..." class="w-full p-3 border rounded-xl col-span-2"></textarea>
+                <select id="lStatus" class="w-full p-3 border rounded-xl">
+                    <option value="New">New Lead</option>
+                    <option value="Negotiating">Negotiating</option>
+                    <option value="Closed">Closed Deal</option>
+                </select>
+                <input type="text" id="lTags" placeholder="Tags (e.g. Investor, Urgent)" class="w-full p-3 border rounded-xl col-span-2">
+                <textarea id="lNotes" placeholder="Notes..." class="w-full p-3 border rounded-xl col-span-2 h-24"></textarea>
             </div>
             <div class="flex justify-end gap-3 mt-8">
-                <button onclick="closeModal('leadModal')" class="text-slate-500 font-bold">Cancel</button>
-                <button id="saveLeadBtn" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Save Contact</button>
+                <button onclick="closeModal('leadModal')" class="px-6 py-2 text-slate-500 font-bold">Cancel</button>
+                <button id="saveLeadBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">Save Contact</button>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPTS -->
     <script type="module" src="app.js"></script>
     <script>
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+            document.getElementById('section' + name).classList.add('active');
+            document.getElementById('nav' + name).classList.add('active');
+            document.getElementById('viewTitle').innerText = name + " Management";
+        }
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     </script>
