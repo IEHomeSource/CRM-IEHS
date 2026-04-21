@@ -37,7 +37,7 @@
                 </button>
                 
                 <div class="mt-10 pt-6 border-t border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-4 italic">Smart Lists (Tags)</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-4 italic text-center">Smart Lists</p>
                     <button onclick="window.filterByTag('all')" class="w-full text-left py-1.5 px-4 text-[11px] text-slate-500 hover:text-white transition uppercase font-bold italic"># Show All</button>
                     <div id="tagNav" class="space-y-1"></div>
                 </div>
@@ -51,7 +51,7 @@
         <main class="flex-1 flex flex-col min-w-0">
             <header class="h-16 bg-white border-b flex items-center justify-between px-8 z-40 shadow-sm">
                 <div class="flex items-center gap-4">
-                    <h2 id="viewTitle" class="text-lg font-bold text-slate-700 tracking-tight">Lead Pipeline</h2>
+                    <h2 id="viewTitle" class="text-lg font-bold text-slate-700 tracking-tight italic uppercase">Lead Pipeline</h2>
                     <div class="flex gap-4 ml-6">
                         <div class="text-center"><p class="text-[10px] text-slate-400 uppercase font-bold">Leads</p><p id="statLeads" class="text-sm font-bold text-blue-600">0</p></div>
                         <div class="text-center"><p class="text-[10px] text-slate-400 uppercase font-bold">Tasks</p><p id="statTasks" class="text-sm font-bold text-orange-600">0</p></div>
@@ -73,30 +73,30 @@
             </header>
 
             <div class="flex-1 overflow-hidden relative">
-                <!-- SECTION LEADS (KANBAN PIPELINE) -->
+                <!-- SECTION LEADS (KANBAN) -->
                 <section id="sectionLeads" class="section active overflow-x-auto p-6">
                     <div class="flex gap-6 h-full items-start">
-                        <!-- Column New -->
+                        <!-- New -->
                         <div class="kanban-column flex flex-col h-full bg-slate-200/50 rounded-2xl p-4">
                             <div class="flex justify-between items-center mb-4 px-2">
                                 <h3 class="font-bold uppercase text-[11px] tracking-widest text-slate-500">New Leads</h3>
-                                <span id="countNew" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm">0</span>
+                                <span id="countNew" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-blue-600">0</span>
                             </div>
                             <div id="colNew" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
-                        <!-- Column Negotiating -->
+                        <!-- Negotiating -->
                         <div class="kanban-column flex flex-col h-full bg-slate-200/50 rounded-2xl p-4">
                             <div class="flex justify-between items-center mb-4 px-2">
                                 <h3 class="font-bold uppercase text-[11px] tracking-widest text-slate-500">Negotiating</h3>
-                                <span id="countNegotiating" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm">0</span>
+                                <span id="countNegotiating" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-orange-600">0</span>
                             </div>
                             <div id="colNegotiating" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
-                        <!-- Column Closed -->
+                        <!-- Closed -->
                         <div class="kanban-column flex flex-col h-full bg-slate-200/50 rounded-2xl p-4">
                             <div class="flex justify-between items-center mb-4 px-2">
                                 <h3 class="font-bold uppercase text-[11px] tracking-widest text-slate-500">Closed Won</h3>
-                                <span id="countClosed" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm">0</span>
+                                <span id="countClosed" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-emerald-600">0</span>
                             </div>
                             <div id="colClosed" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
@@ -108,14 +108,14 @@
                 </section>
 
                 <section id="sectionCalendar" class="section flex-col p-10 overflow-y-auto bg-slate-50">
-                    <div id="apptsList" class="space-y-4 max-w-3xl mx-auto w-full"></div>
+                    <div id="apptsList" class="space-y-4 max-w-3xl mx-auto w-full text-sm"></div>
                 </section>
             </div>
         </main>
     </div>
 
-    <!-- MODAL LEAD DETAILS (DRAWER) -->
-    <div id="detailsPanel" class="fixed inset-y-0 right-0 w-[500px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.1)] z-[100] hidden transform transition-transform duration-300 overflow-y-auto">
+    <!-- LEAD DETAIL PANEL (ASANA STYLE) -->
+    <div id="detailsPanel" class="fixed inset-y-0 right-0 w-[500px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.1)] z-[100] hidden overflow-y-auto">
         <div class="p-8">
             <div class="flex justify-between items-center mb-8 border-b pb-4">
                 <h3 class="font-bold text-xl uppercase tracking-tighter">Contact Record</h3>
@@ -123,29 +123,29 @@
             </div>
             <input type="hidden" id="eId">
             <div class="space-y-6 text-sm">
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Full Name</label><input type="text" id="eName" class="w-full bg-transparent border-b py-2 outline-none font-bold text-xl focus:border-blue-500"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Full Name</label><input type="text" id="eName" class="w-full bg-transparent border-b py-2 outline-none font-bold text-xl focus:border-blue-500 transition"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input type="text" id="ePhone" class="w-full bg-transparent border-b py-2 outline-none font-bold font-mono"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Email</label><input type="text" id="eEmail" class="w-full bg-transparent border-b py-2 outline-none"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Phone</label><input type="text" id="ePhone" class="w-full bg-transparent border-b py-2 outline-none font-bold font-mono"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Email</label><input type="text" id="eEmail" class="w-full bg-transparent border-b py-2 outline-none"></div>
                 </div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Address</label><input type="text" id="eAddress" class="w-full bg-transparent border-b py-2 outline-none"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Address</label><input type="text" id="eAddress" class="w-full bg-transparent border-b py-2 outline-none"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">State</label>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">State</label>
                         <select id="eState" class="w-full bg-transparent border-b py-2 outline-none">
-                            <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+                            <option value="TX">TX</option><option value="FL">FL</option><option value="CA">CA</option><option value="NY">NY</option><option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
                         </select>
                     </div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Status</label>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Status</label>
                         <select id="eStatus" class="w-full bg-transparent border-b py-2 outline-none font-bold">
                             <option value="New">New Lead</option><option value="Negotiating">Negotiating</option><option value="Closed">Closed</option>
                         </select>
                     </div>
                 </div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Tags</label><input type="text" id="eTags" class="w-full bg-transparent border-b py-2 outline-none text-blue-600 font-bold uppercase"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Tags (comma separated)</label><input type="text" id="eTags" class="w-full bg-transparent border-b py-2 outline-none text-blue-600 font-bold uppercase text-xs"></div>
                 <div class="bg-slate-50 p-6 rounded-2xl border">
                     <label class="text-[10px] font-bold text-slate-400 uppercase block mb-4 italic">Activity & Notes</label>
                     <textarea id="newNote" placeholder="Update lead..." class="w-full p-4 bg-white border rounded-xl h-24 mb-4 outline-none text-sm"></textarea>
-                    <button onclick="window.addNote()" class="bg-blue-600 text-white w-full py-2 rounded-xl font-bold text-xs uppercase tracking-widest">Post Activity</button>
+                    <button onclick="window.addNote()" class="bg-blue-600 text-white w-full py-2 rounded-xl font-bold text-xs uppercase tracking-widest">Post Note</button>
                     <div id="notesHistory" class="mt-6 space-y-4 divide-y divide-slate-100"></div>
                 </div>
                 <button onclick="window.saveLeadUpdates()" class="bg-slate-900 text-white w-full py-4 rounded-2xl font-bold shadow-lg hover:bg-black transition">SAVE ALL CHANGES</button>
@@ -154,37 +154,36 @@
         </div>
     </div>
 
-    <!-- MODAL ADD LEAD -->
+    <!-- MODALES (Lead, Task, Appt) -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center hidden z-[110] p-4">
         <div class="bg-white p-10 rounded-[40px] w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
             <h3 class="text-3xl font-bold mb-8 italic tracking-tighter uppercase">New Contact</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Name</label><input type="text" id="lName" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Phone</label><input type="text" id="lPhone" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Email</label><input type="email" id="lEmail" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Address</label><input type="text" id="lAddress" class="w-full p-4 bg-slate-50 rounded-2xl outline-none"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Zip</label><input type="text" id="lZip" class="w-full p-4 bg-slate-50 rounded-2xl outline-none"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Full Name</label><input type="text" id="lName" placeholder="Full Name" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Phone</label><input type="text" id="lPhone" placeholder="Phone" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Email</label><input type="email" id="lEmail" placeholder="Email" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Address</label><input type="text" id="lAddress" placeholder="Street Address" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Zip Code</label><input type="text" id="lZip" placeholder="Zip" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">State</label>
                     <select id="lState" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
-                        <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX" selected>TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+                        <option value="TX">TX</option><option value="FL">FL</option><option value="CA">CA</option><option value="NY">NY</option><option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
                     </select>
                 </div>
-                <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Initial Notes</label><textarea id="lNotes" class="w-full p-4 bg-slate-50 rounded-2xl outline-none h-24"></textarea></div>
+                <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Initial Notes</label><textarea id="lNotes" placeholder="Motivation, details..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none h-24"></textarea></div>
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button onclick="window.closeModal('leadModal')" class="font-bold text-slate-400">CANCEL</button>
-                <button id="saveLeadBtn" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl transition">CREATE</button>
+                <button onclick="window.closeModal('leadModal')" class="font-bold text-slate-400 uppercase">Cancel</button>
+                <button id="saveLeadBtn" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl transition">Create Contact</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL TASK -->
-    <div id="taskModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center hidden z-[110] p-4">
+    <div id="taskModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center hidden z-[110] p-4 text-sm">
         <div class="bg-white p-10 rounded-[40px] w-full max-w-md shadow-2xl">
             <h3 id="taskTitleHeader" class="text-2xl font-bold mb-6 italic tracking-widest uppercase">Task</h3>
             <input type="hidden" id="tEditId">
             <div class="space-y-4">
-                <input type="text" id="tTitle" placeholder="What to do?" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
+                <input type="text" id="tTitle" placeholder="Task description..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                 <select id="tPriority" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
                     <option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High 🔥</option>
                 </select>
@@ -192,13 +191,12 @@
                 <input type="date" id="tDate" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button onclick="window.closeModal('taskModal')" class="font-bold text-slate-400">CLOSE</button>
-                <button id="saveTaskBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold">SAVE</button>
+                <button onclick="window.closeModal('taskModal')" class="font-bold text-slate-400 uppercase">Close</button>
+                <button id="saveTaskBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL APPT -->
     <div id="apptModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center hidden z-[110] p-4 text-sm">
         <div class="bg-white p-10 rounded-[40px] w-full max-w-md shadow-2xl">
             <h3 id="apptTitleHeader" class="text-2xl font-bold mb-6 italic tracking-widest uppercase">Appointment</h3>
@@ -209,8 +207,8 @@
                 <input type="datetime-local" id="aDate" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button onclick="window.closeModal('apptModal')" class="font-bold text-slate-400 uppercase text-xs">Close</button>
-                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg uppercase text-xs">Schedule</button>
+                <button onclick="window.closeModal('apptModal')" class="font-bold text-slate-400 uppercase">Close</button>
+                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg uppercase">Schedule</button>
             </div>
         </div>
     </div>
