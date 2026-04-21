@@ -64,20 +64,20 @@
             </header>
 
             <div class="flex-1 overflow-hidden relative">
-                <!-- SECTION LEADS -->
+                <!-- LEADS -->
                 <section id="sectionLeads" class="section active flex-col">
                     <div class="p-8 pb-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Leads</p>
-                            <h3 class="text-4xl font-bold text-slate-800 mt-2" id="statLeads">0</h3>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase">Total Leads</p>
+                            <h3 class="text-4xl font-bold text-slate-800 mt-1" id="statLeads">0</h3>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Active Tasks</p>
-                            <h3 class="text-4xl font-bold text-blue-600 mt-2" id="statTasks">0</h3>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase">Tasks</p>
+                            <h3 class="text-4xl font-bold text-blue-600 mt-1" id="statTasks">0</h3>
                         </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Appointments</p>
-                            <h3 class="text-4xl font-bold text-emerald-600 mt-2" id="statAppts">0</h3>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase">Meetings</p>
+                            <h3 class="text-4xl font-bold text-emerald-600 mt-1" id="statAppts">0</h3>
                         </div>
                     </div>
 
@@ -91,11 +91,10 @@
                         <div class="flex-1 overflow-y-auto bg-white border-r border-slate-100">
                             <div id="leadsList" class="divide-y divide-slate-50"></div>
                         </div>
-                        <!-- LEAD DETAIL PANEL -->
                         <div id="detailsPanel" class="w-[500px] bg-slate-50 border-l overflow-y-auto hidden">
                             <div class="p-8">
                                 <div class="flex justify-between items-center mb-8 border-b pb-4">
-                                    <h3 class="font-bold text-xl uppercase tracking-tighter">Contact Detail</h3>
+                                    <h3 class="font-bold text-xl uppercase tracking-tighter">Detail</h3>
                                     <button onclick="document.getElementById('detailsPanel').classList.add('hidden')" class="text-slate-400"><i class="fa fa-times text-xl"></i></button>
                                 </div>
                                 <input type="hidden" id="eId">
@@ -117,7 +116,15 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button onclick="window.saveLeadUpdates()" class="bg-blue-600 text-white w-full py-4 rounded-2xl font-bold shadow-lg">Save Record</button>
+                                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Tags</label><input type="text" id="eTags" class="w-full bg-transparent border-b py-2 outline-none text-blue-600 font-bold"></div>
+                                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase block mb-4 italic">Timeline</label>
+                                        <textarea id="newNote" placeholder="Add a comment..." class="w-full p-4 bg-slate-50 border-none rounded-xl h-24 mb-4 outline-none text-sm"></textarea>
+                                        <button onclick="window.addNote()" class="bg-slate-900 text-white w-full py-2 rounded-xl font-bold text-xs uppercase tracking-widest">Post Note</button>
+                                        <div id="notesHistory" class="mt-6 space-y-4 divide-y"></div>
+                                    </div>
+                                    <button onclick="window.saveLeadUpdates()" class="bg-blue-600 text-white w-full py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition">Save Record</button>
+                                    <button onclick="window.deleteItem('leads', document.getElementById('eId').value)" class="text-red-500 w-full text-[10px] font-bold uppercase py-2 hover:underline mt-4">Delete Permanently</button>
                                 </div>
                             </div>
                         </div>
@@ -135,26 +142,27 @@
         </main>
     </div>
 
-    <!-- MODAL ADD LEAD -->
+    <!-- MODAL NEW LEAD -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center hidden z-[100] p-4">
         <div class="bg-white p-10 rounded-[40px] w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h3 class="text-3xl font-bold mb-8 italic tracking-tighter">New Lead</h3>
+            <h3 class="text-3xl font-bold mb-8 italic tracking-tighter">New Lead Contact</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Full Name</label><input type="text" id="lName" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Phone</label><input type="text" id="lPhone" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Email</label><input type="email" id="lEmail" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Address</label><input type="text" id="lAddress" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Zip Code</label><input type="text" id="lZip" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">State</label>
-                    <select id="lState" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500">
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Full Name</label><input type="text" id="lName" placeholder="Full Name" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 mt-1"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Phone</label><input type="text" id="lPhone" placeholder="Phone Number" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold mt-1"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Email</label><input type="email" id="lEmail" placeholder="email@example.com" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 mt-1"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Address</label><input type="text" id="lAddress" placeholder="Street Address" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 mt-1"></div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Zip Code</label><input type="text" id="lZip" placeholder="Zip Code" class="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 mt-1"></div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">State</label>
+                    <select id="lState" class="w-full p-4 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 mt-1">
                         <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX" selected>TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
                     </select>
                 </div>
-                <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Initial Notes</label><textarea id="lNotes" class="w-full p-4 bg-slate-50 rounded-2xl outline-none h-24"></textarea></div>
+                <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Initial Notes</label><textarea id="lNotes" class="w-full p-4 bg-slate-50 rounded-2xl outline-none h-24 mt-1"></textarea></div>
             </div>
             <div class="flex justify-end gap-4 mt-8">
                 <button onclick="window.closeModal('leadModal')" class="font-bold text-slate-400">CANCEL</button>
-                <button id="saveLeadBtn" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl">CREATE CONTACT</button>
+                <button id="saveLeadBtn" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">CREATE CONTACT</button>
             </div>
         </div>
     </div>
@@ -166,17 +174,13 @@
             <input type="hidden" id="tEditId">
             <div class="space-y-4">
                 <input type="text" id="tTitle" placeholder="What to do?" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
-                <select id="tPriority" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High 🔥</option>
-                </select>
+                <select id="tPriority" class="w-full p-4 bg-slate-50 rounded-2xl outline-none"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High 🔥</option></select>
                 <select id="tLeadId" class="w-full p-4 bg-slate-50 rounded-2xl outline-none"></select>
                 <input type="date" id="tDate" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button onclick="window.closeModal('taskModal')" class="font-bold text-slate-400">CLOSE</button>
-                <button id="saveTaskBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">SAVE</button>
+                <button onclick="window.closeModal('taskModal')" class="font-bold text-slate-400 text-xs">CLOSE</button>
+                <button id="saveTaskBtn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg">SAVE</button>
             </div>
         </div>
     </div>
@@ -184,7 +188,7 @@
     <!-- MODAL APPT -->
     <div id="apptModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center hidden z-[100] p-4">
         <div class="bg-white p-10 rounded-[40px] w-full max-w-md shadow-2xl">
-            <h3 id="apptTitleHeader" class="text-2xl font-bold mb-6 italic">Meeting</h3>
+            <h3 id="apptTitleHeader" class="text-2xl font-bold mb-6 italic tracking-tighter">Appointment</h3>
             <input type="hidden" id="aEditId">
             <div class="space-y-4">
                 <input type="text" id="aTitle" placeholder="Meeting objective..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
@@ -192,8 +196,8 @@
                 <input type="datetime-local" id="aDate" class="w-full p-4 bg-slate-50 rounded-2xl outline-none">
             </div>
             <div class="flex justify-end gap-4 mt-8">
-                <button onclick="window.closeModal('apptModal')" class="font-bold text-slate-400">CLOSE</button>
-                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg">SCHEDULE</button>
+                <button onclick="window.closeModal('apptModal')" class="font-bold text-slate-400 text-xs">CLOSE</button>
+                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg uppercase text-xs">Schedule</button>
             </div>
         </div>
     </div>
