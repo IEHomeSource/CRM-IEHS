@@ -53,6 +53,7 @@ async function loadData() {
     renderTagsNav(allLeads); // SMART LISTS
     updateSelects(allLeads);
     
+    // CONTADORES REALES
     document.getElementById('statLeads').innerText = allLeads.length;
     document.getElementById('statTasks').innerText = (tasksRes.data || []).length;
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
@@ -64,7 +65,7 @@ function renderLeads(list) {
         <div onclick="window.viewDetails('${l.id}')" class="p-5 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center bg-white border-b border-l-4 border-transparent hover:border-blue-500">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold text-xs border uppercase">${l.name.substring(0,2)}</div>
-                <div><p class="font-bold text-slate-800">${l.name}</p><p class="text-xs text-slate-400 font-mono">${l.phone} • ${l.state || 'N/A'}</p></div>
+                <div><p class="font-bold text-slate-800 text-sm">${l.name}</p><p class="text-xs text-slate-400 font-mono">${l.phone} • ${l.state || 'N/A'}</p></div>
             </div>
             <div class="text-right text-[10px] font-bold uppercase"><span class="px-2 py-1 rounded-full ${l.status === 'Closed' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${l.status}</span></div>
         </div>
@@ -101,10 +102,10 @@ function renderHistory(fullText) {
     const container = document.getElementById('notesHistory');
     if (!fullText) { container.innerHTML = "<p class='text-xs text-slate-300 italic'>No logs.</p>"; return; }
     const notesArray = fullText.split('---').filter(n => n.trim() !== "");
-    container.innerHTML = notesArray.reverse().map(n => `<div class="py-3 text-[12px] text-slate-600 leading-relaxed whitespace-pre-wrap">${n.trim()}</div>`).join('');
+    container.innerHTML = notesArray.reverse().map(n => `<div class="py-3 text-[12px] text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">${n.trim()}</div>`).join('');
 }
 
-// --- SAVE / EDIT ACTIONS ---
+// --- SAVE / UPDATE LOGIC ---
 document.getElementById('saveLeadBtn').onclick = async () => {
     const timestamp = new Date().toLocaleString();
     const payload = { 
@@ -161,6 +162,22 @@ document.getElementById('saveApptBtn').onclick = async () => {
     const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
     const { error } = editId ? await supabase.from('appointments').update(payload).eq('id', editId) : await supabase.from('appointments').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('apptModal'); loadData(); }
+};
+
+// --- IMPORT ---
+document.getElementById('csvFileInput').onchange = function(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        const rows = ev.target.result.split('\n').slice(1);
+        const dataToInsert = rows.filter(r => r.trim()).map(r => {
+            const cols = r.split(',');
+            return { name: cols[0], phone: cols[1], status: 'New', last_activity: new Date().toISOString() };
+        });
+        await supabase.from('leads').insert(dataToInsert);
+        loadData();
+    };
+    reader.readAsText(file);
 };
 
 // --- REST OF LOGIC ---
