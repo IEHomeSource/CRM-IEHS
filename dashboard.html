@@ -3,136 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | CRM</title>
+    <title>Dashboard | CRM Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .section { display: none; }
         .section.active { display: block; }
         .sidebar-item.active { background-color: #1e293b; border-left: 4px solid #3b82f6; color: white; }
+        /* GHL style scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
     <div class="flex h-screen overflow-hidden">
-        <!-- SIDEBAR -->
-        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col h-full shadow-xl">
-            <div class="p-6 text-xl font-bold border-b border-slate-800 text-white flex items-center gap-2">
-                <i class="fa-solid fa-bolt text-blue-400"></i> CRM ALPHA
+        
+        <!-- SIDEBAR (GoHighLevel Style) -->
+        <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full">
+            <div class="p-6 text-xl font-bold border-b border-slate-800 text-white flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <i class="fa-solid fa-rocket text-white text-sm"></i>
+                </div>
+                CRM ALPHA
             </div>
-            <nav class="flex-1 mt-4">
-                <button onclick="showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-3 px-6 hover:bg-slate-800 transition">
-                    <i class="fa fa-user-group w-6"></i> Leads
+            
+            <nav class="flex-1 mt-6 px-3 space-y-1">
+                <p class="text-xs font-bold text-slate-500 px-3 mb-2 uppercase tracking-widest">Main Menu</p>
+                <button onclick="showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                    <i class="fa fa-users w-6"></i> Leads
                 </button>
-                <button onclick="showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-3 px-6 hover:bg-slate-800 transition">
+                <button onclick="showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
                     <i class="fa fa-list-check w-6"></i> Team Tasks
                 </button>
+                <button onclick="showSection('Automation')" id="navAutomation" class="sidebar-item w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                    <i class="fa fa-bolt w-6"></i> Automations
+                </button>
+                
+                <p class="text-xs font-bold text-slate-500 px-3 mt-8 mb-2 uppercase tracking-widest">Reporting</p>
+                <button class="w-full flex items-center py-2.5 px-4 rounded-lg hover:text-white transition">
+                    <i class="fa fa-chart-pie w-6"></i> Stats
+                </button>
             </nav>
+
             <div class="p-4 border-t border-slate-800">
-                <button id="logoutBtn" class="flex items-center gap-2 text-slate-400 hover:text-white transition w-full">
+                <div class="bg-slate-800 p-3 rounded-lg flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs">AD</div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs text-white font-bold truncate">Admin User</p>
+                        <p class="text-[10px] text-slate-400 truncate">Pro Account</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="flex items-center gap-2 text-slate-400 hover:text-red-400 transition text-sm px-3">
                     <i class="fa fa-right-from-bracket"></i> Logout
                 </button>
             </div>
         </aside>
 
-        <!-- MAIN AREA -->
+        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-8 shadow-sm">
-                <h2 id="currentTabTitle" class="text-xl font-bold text-slate-700">Leads Pipeline</h2>
+            
+            <!-- Header -->
+            <header class="h-16 bg-white border-b flex items-center justify-between px-8 sticky top-0 z-10">
                 <div class="flex items-center gap-4">
-                    <!-- HIDDEN CSV INPUT -->
+                    <h2 id="currentTabTitle" class="text-lg font-bold text-slate-800">Leads Management</h2>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i class="fa fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" placeholder="Search leads..." class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64">
+                    </div>
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
-                    <button onclick="document.getElementById('csvFileInput').click()" class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-bold border border-emerald-200">
-                        <i class="fa fa-file-import"></i> Bulk Import
+                    <button onclick="document.getElementById('csvFileInput').click()" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 transition">
+                        <i class="fa fa-file-import mr-1 text-emerald-500"></i> Import
                     </button>
-                    <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-200">
+                    <button onclick="openModal('leadModal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition">
                         + New Lead
                     </button>
                 </div>
             </header>
 
             <div class="p-8">
-                <!-- LEADS SECTION -->
+                
+                <!-- STATS CARDS (The GHL Look) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-xs font-bold text-slate-500 uppercase">Total Leads</p>
+                            <i class="fa fa-users text-blue-500"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold" id="totalCount">0</h3>
+                        <p class="text-[10px] text-emerald-500 font-bold mt-1"><i class="fa fa-arrow-up"></i> 12% vs last month</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-xs font-bold text-slate-500 uppercase">Opportunities</p>
+                            <i class="fa fa-filter text-orange-500"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold">14</h3>
+                        <p class="text-[10px] text-slate-400 mt-1">Pipeline value: $12k</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-xs font-bold text-slate-500 uppercase">Pending Tasks</p>
+                            <i class="fa fa-clock text-red-500"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold">8</h3>
+                        <p class="text-[10px] text-red-400 mt-1">3 overdue</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-xs font-bold text-slate-500 uppercase">Closed Deals</p>
+                            <i class="fa fa-circle-check text-emerald-500"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold">29</h3>
+                        <p class="text-[10px] text-emerald-500 mt-1">Conversion: 4.2%</p>
+                    </div>
+                </div>
+
+                <!-- MAIN TABLE SECTION -->
                 <section id="sectionLeads" class="section active">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <p class="font-bold text-sm text-slate-600">Leads List</p>
+                            <div class="flex gap-2">
+                                <button class="text-xs bg-white border px-3 py-1 rounded shadow-sm hover:bg-slate-50">Filter</button>
+                                <button class="text-xs bg-white border px-3 py-1 rounded shadow-sm hover:bg-slate-50">Export</button>
+                            </div>
+                        </div>
                         <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b">
-                                <tr>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Name</th>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Tags</th>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Status</th>
-                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase text-center">Actions</th>
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500">
+                                    <th class="p-4 text-[10px] font-bold uppercase tracking-wider">Contact Info</th>
+                                    <th class="p-4 text-[10px] font-bold uppercase tracking-wider">Tags</th>
+                                    <th class="p-4 text-[10px] font-bold uppercase tracking-wider">Status</th>
+                                    <th class="p-4 text-[10px] font-bold uppercase tracking-wider">Created</th>
+                                    <th class="p-4 text-[10px] font-bold uppercase tracking-wider text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="leadsTableBody"></tbody>
+                            <tbody id="leadsTableBody" class="divide-y divide-slate-100">
+                                <!-- Data from app.js -->
+                            </tbody>
                         </table>
                     </div>
                 </section>
 
-                <!-- TASKS SECTION -->
+                <!-- Placeholder for other sections -->
                 <section id="sectionTasks" class="section">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold">Team Assignments</h3>
-                        <button onclick="openModal('taskModal')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">+ New Task</button>
-                    </div>
-                    <div id="tasksTableContainer" class="bg-white rounded-xl border p-4 shadow-sm">
-                        <!-- Tasks list here -->
-                        <div id="tasksList" class="space-y-3"></div>
+                    <div class="bg-white p-12 rounded-xl border border-dashed border-slate-300 text-center">
+                        <i class="fa fa-list-check text-4xl text-slate-300 mb-4"></i>
+                        <h3 class="text-lg font-bold text-slate-600">Task Management</h3>
+                        <p class="text-slate-400">Section under development. Coming soon!</p>
                     </div>
                 </section>
+                
             </div>
         </main>
     </div>
 
-    <!-- MODAL: EDIT LEAD (Single View) -->
-    <div id="editLeadModal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-2xl w-full max-w-lg shadow-2xl">
-            <h3 class="text-xl font-bold mb-6">Lead Details & Edit</h3>
-            <input type="hidden" id="editLeadId">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2">
-                    <label class="text-xs font-bold text-slate-500">FULL NAME</label>
-                    <input type="text" id="editLeadName" class="w-full p-3 border rounded-lg">
+    <!-- MODAL: NEW LEAD (Improved Design) -->
+    <div id="leadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Add New Lead</h3>
+                <button onclick="closeModal('leadModal')" class="text-slate-400 hover:text-slate-600"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Full Name</label>
+                    <input type="text" id="leadName" placeholder="e.g. John Doe" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-500">TAGS (Comma separated)</label>
-                    <input type="text" id="editLeadTags" placeholder="Inverstment, Urgent" class="w-full p-3 border rounded-lg">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Property Address</label>
+                    <input type="text" id="leadAddress" placeholder="123 Street Ave" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-500">STATUS</label>
-                    <select id="editLeadStatus" class="w-full p-3 border rounded-lg">
-                        <option value="New">New</option>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Initial Status</label>
+                    <select id="leadStatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                        <option value="New">New Lead</option>
                         <option value="Negotiating">Negotiating</option>
-                        <option value="Closed">Closed</option>
+                        <option value="Closed">Closed Deal</option>
                     </select>
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-8">
-                <button onclick="closeModal('editLeadModal')" class="text-slate-500 font-medium">Cancel</button>
-                <button id="updateLeadBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Update Lead</button>
+                <button onclick="closeModal('leadModal')" class="px-6 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition">Cancel</button>
+                <button id="saveLeadBtn" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">Save Lead</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: NEW LEAD -->
-    <div id="leadModal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold mb-6">Create New Lead</h3>
-            <div class="space-y-4">
-                <input type="text" id="leadName" placeholder="Name" class="w-full p-3 border rounded-lg">
-                <input type="text" id="leadAddress" placeholder="Address" class="w-full p-3 border rounded-lg">
-                <select id="leadStatus" class="w-full p-3 border rounded-lg">
-                    <option value="New">New</option>
-                    <option value="Negotiating">Negotiating</option>
-                </select>
-            </div>
-            <div class="flex justify-end gap-3 mt-8">
-                <button onclick="closeModal('leadModal')" class="text-slate-500 font-medium">Cancel</button>
-                <button id="saveLeadBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- SCRIPTS -->
     <script type="module" src="app.js"></script>
     <script>
         function showSection(name) {
