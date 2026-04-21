@@ -22,29 +22,52 @@
         <p id="msg" class="mt-4 text-center text-red-500 text-sm"></p>
     </div>
 
-    <script type="module">
-        import { supabase } from './config.js';
+<script type="module">
+    // We add a "catch" to see if config.js or Supabase fails to load
+    import { supabase } from './config.js';
 
-        async function handleAuth(isSignUp) {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if(!email || !password) return alert("Fill all fields");
+    console.log("Supabase connection initialized"); // This should appear in F12
 
-            const { error } = isSignUp 
+    async function handleAuth(isSignUp) {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alert("Please enter both email and password");
+            return;
+        }
+
+        try {
+            console.log("Attempting auth for:", email);
+            const { data, error } = isSignUp 
                 ? await supabase.auth.signUp({ email, password }) 
                 : await supabase.auth.signInWithPassword({ email, password });
             
-            if (error) document.getElementById('msg').innerText = error.message;
-            else window.location.href = 'dashboard.html';
+            if (error) {
+                console.error("Auth error:", error.message);
+                alert("Auth Error: " + error.message);
+                document.getElementById('msg').innerText = error.message;
+            } else {
+                console.log("Success! Redirecting...");
+                window.location.href = 'dashboard.html';
+            }
+        } catch (err) {
+            console.error("Unexpected error:", err);
+            alert("Critical Error: " + err.message);
         }
+    }
 
-        document.getElementById('btnSignIn').onclick = () => handleAuth(false);
-        document.getElementById('btnSignUp').onclick = () => handleAuth(true);
+    // Assigning functions to buttons manually to ensure they work
+    document.getElementById('btnSignIn').addEventListener('click', () => handleAuth(false));
+    document.getElementById('btnSignUp').addEventListener('click', () => handleAuth(true));
 
-        // Auto-redirect if session exists
-        supabase.auth.getSession().then(({data}) => {
-            if(data.session) window.location.href = 'dashboard.html';
-        });
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({data}) => {
+        if(data?.session) {
+            console.log("Session found, redirecting to dashboard");
+            window.location.href = 'dashboard.html';
+        }
+    });
     </script>
 </body>
 </html>
