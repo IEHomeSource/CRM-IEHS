@@ -30,7 +30,10 @@ async function init() {
     loadData();
     document.getElementById('searchInput').oninput = (e) => {
         const term = e.target.value.toLowerCase();
-        const filtered = allLeads.filter(l => l.name.toLowerCase().includes(term) || (l.phone && l.phone.includes(term)));
+        const filtered = allLeads.filter(l => 
+            (l.name && l.name.toLowerCase().includes(term)) || 
+            (l.phone && l.phone.includes(term))
+        );
         renderBoard(filtered);
     };
 }
@@ -52,30 +55,37 @@ async function loadData() {
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
 }
 
-// --- KANBAN RENDERER (THE GHL BOARD) ---
+// --- PIPELINE KANBAN RENDERER ---
 function renderBoard(list) {
     const filteredByTag = currentTagFilter === 'all' ? list : list.filter(l => (l.tags || []).includes(currentTagFilter));
     
-    const columns = { 'New': 'colNew', 'Negotiating': 'colNegotiating', 'Closed': 'colClosed' };
-    Object.values(columns).forEach(id => document.getElementById(id).innerHTML = '');
+    const colIds = { 'New': 'colNew', 'Negotiating': 'colNegotiating', 'Closed': 'colClosed' };
+    Object.values(colIds).forEach(id => document.getElementById(id).innerHTML = '');
     
     const counts = { 'New': 0, 'Negotiating': 0, 'Closed': 0 };
 
     filteredByTag.forEach(l => {
-        const colId = columns[l.status] || 'colNew';
-        counts[l.status]++;
-        const card = `
-            <div onclick="window.viewDetails('${l.id}')" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-300 transition cursor-pointer group">
-                <div class="flex justify-between items-start mb-2">
-                    <p class="font-bold text-slate-800 text-sm">${l.name}</p>
-                    <span class="text-[8px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-bold uppercase tracking-tighter">${l.state || 'TX'}</span>
-                </div>
-                <p class="text-[11px] text-slate-400 font-mono mb-3">${l.phone}</p>
-                <div class="flex flex-wrap gap-1">
-                    ${(l.tags || []).map(t => `<span class="bg-slate-100 text-slate-500 text-[8px] px-1 py-0.5 rounded uppercase font-bold">#${t}</span>`).join('')}
-                </div>
-            </div>`;
-        document.getElementById(colId).innerHTML += card;
+        // FALLBACK: Si no tiene status o el status no coincide, lo mandamos a New
+        let status = l.status || 'New';
+        if (!colIds[status]) status = 'New'; 
+
+        counts[status]++;
+        const colElement = document.getElementById(colIds[status]);
+        
+        const card = document.createElement('div');
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-300 transition cursor-pointer group";
+        card.onclick = () => window.viewDetails(l.id);
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <p class="font-bold text-slate-800 text-sm">${l.name || 'Unnamed'}</p>
+                <span class="text-[8px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-bold uppercase tracking-tighter">${l.state || 'N/A'}</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-mono mb-3">${l.phone || 'No phone'}</p>
+            <div class="flex flex-wrap gap-1">
+                ${(l.tags || []).map(t => `<span class="bg-slate-100 text-slate-500 text-[8px] px-1 py-0.5 rounded uppercase font-bold">#${t}</span>`).join('')}
+            </div>
+        `;
+        colElement.appendChild(card);
     });
 
     document.getElementById('countNew').innerText = counts['New'];
@@ -83,11 +93,11 @@ function renderBoard(list) {
     document.getElementById('countClosed').innerText = counts['Closed'];
 }
 
-// --- TAGS (SMART LISTS) LOGIC ---
+// --- SMART LISTS (TAGS) ---
 function renderTagsNav(data) {
     const tags = [...new Set(data.flatMap(l => l.tags || []))];
     const container = document.getElementById('tagNav');
-    container.innerHTML = tags.map(t => `<button onclick="window.filterByTag('${t}')" class="w-full text-left py-2 px-4 text-[11px] text-slate-500 hover:text-white uppercase font-bold tracking-widest italic transition"># ${t}</button>`).join('');
+    container.innerHTML = tags.map(t => `<button onclick="window.filterByTag('${t}')" class="w-full text-left py-1.5 px-4 text-[11px] text-slate-500 hover:text-white uppercase font-bold tracking-widest italic transition"># ${t}</button>`).join('');
 }
 
 window.filterByTag = (tag) => {
@@ -96,19 +106,20 @@ window.filterByTag = (tag) => {
     renderBoard(allLeads);
 };
 
-// --- REST OF LOGIC (LEAD DETAILS, TASKS, APPTS) ---
+// --- DETAILS & ACTIVITY ---
 window.viewDetails = async (id) => {
     const lead = allLeads.find(l => l.id === id);
     if (!lead) return;
     document.getElementById('detailsPanel').classList.remove('hidden');
     document.getElementById('eId').value = lead.id;
-    document.getElementById('eName').value = lead.name;
-    document.getElementById('ePhone').value = lead.phone;
+    document.getElementById('eName').value = lead.name || "";
+    document.getElementById('ePhone').value = lead.phone || "";
     document.getElementById('eEmail').value = lead.email || "";
     document.getElementById('eAddress').value = lead.address || "";
     document.getElementById('eState').value = lead.state || "TX";
-    document.getElementById('eStatus').value = lead.status;
+    document.getElementById('eStatus').value = lead.status || "New";
     document.getElementById('eTags').value = (lead.tags || []).join(', ');
+    document.getElementById('labelStatus').innerText = lead.status || "New";
     renderHistory(lead.notes);
 };
 
@@ -116,7 +127,7 @@ function renderHistory(fullText) {
     const container = document.getElementById('notesHistory');
     if (!fullText) { container.innerHTML = "<p class='text-xs text-slate-300 italic'>No logs.</p>"; return; }
     const notesArray = fullText.split('---').filter(n => n.trim() !== "");
-    container.innerHTML = notesArray.reverse().map(n => `<div class="py-3 text-[12px] text-slate-600 leading-relaxed whitespace-pre-wrap">${n.trim()}</div>`).join('');
+    container.innerHTML = notesArray.reverse().map(n => `<div class="py-3 text-[12px] text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">${n.trim()}</div>`).join('');
 }
 
 window.saveLeadUpdates = async () => {
@@ -128,8 +139,8 @@ window.saveLeadUpdates = async () => {
         tags: document.getElementById('eTags').value.split(',').map(t => t.trim()).filter(t => t !== ""),
         last_activity: new Date().toISOString()
     };
-    await supabase.from('leads').update(payload).eq('id', id);
-    loadData(); alert("Saved!");
+    const { error } = await supabase.from('leads').update(payload).eq('id', id);
+    if (error) alert(error.message); else { loadData(); alert("Saved!"); }
 };
 
 window.addNote = async () => {
@@ -142,40 +153,44 @@ window.addNote = async () => {
     document.getElementById('newNote').value = ""; loadData(); window.viewDetails(id);
 };
 
+// --- CREATION ---
 document.getElementById('saveLeadBtn').onclick = async () => {
+    const timestamp = new Date().toLocaleString();
     const payload = { 
         name: document.getElementById('lName').value, phone: document.getElementById('lPhone').value, 
         email: document.getElementById('lEmail').value, address: document.getElementById('lAddress').value,
         zip_code: document.getElementById('lZip').value, state: document.getElementById('lState').value,
-        notes: document.getElementById('lNotes').value ? `\n[${new Date().toLocaleString()}]: ${document.getElementById('lNotes').value} ---` : "",
+        notes: document.getElementById('lNotes').value ? `\n[${timestamp}]: ${document.getElementById('lNotes').value} ---` : "",
         status: 'New', last_activity: new Date().toISOString() 
     };
+    if(!payload.name || !payload.phone) return alert("Name/Phone required.");
     const { error } = await supabase.from('leads').insert([payload]);
-    if (error) alert("Duplicate Phone or Error"); else { window.closeModal('leadModal'); loadData(); }
+    if (error) alert(error.message); else { window.closeModal('leadModal'); loadData(); }
 };
 
 document.getElementById('saveTaskBtn').onclick = async () => {
     const editId = document.getElementById('tEditId').value;
     const payload = { title: document.getElementById('tTitle').value, priority: document.getElementById('tPriority').value, lead_id: document.getElementById('tLeadId').value || null, due_date: document.getElementById('tDate').value };
-    if(editId) await supabase.from('tasks').update(payload).eq('id', editId); else await supabase.from('tasks').insert([payload]);
-    window.closeModal('taskModal'); loadData();
+    const { error } = editId ? await supabase.from('tasks').update(payload).eq('id', editId) : await supabase.from('tasks').insert([payload]);
+    if (error) alert(error.message); else { window.closeModal('taskModal'); loadData(); }
 };
 
 document.getElementById('saveApptBtn').onclick = async () => {
     const editId = document.getElementById('aEditId').value;
     const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
-    if(editId) await supabase.from('appointments').update(payload).eq('id', editId); else await supabase.from('appointments').insert([payload]);
-    window.closeModal('apptModal'); loadData();
+    const { error } = editId ? await supabase.from('appointments').update(payload).eq('id', editId) : await supabase.from('appointments').insert([payload]);
+    if (error) alert(error.message); else { window.closeModal('apptModal'); loadData(); }
 };
 
+// --- RENDER TASKS/APPTS ---
 function renderTasks(list) {
     const container = document.getElementById('tasksList');
-    container.innerHTML = list.map(t => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 border-l-4 ${t.priority === 'High' ? 'border-l-red-500' : 'border-l-blue-500'} shadow-sm"><div class="flex justify-between items-start mb-4"><span class="text-[10px] font-bold uppercase text-slate-400">${t.priority} Priority</span><div class="flex gap-2"><button onclick="window.editTask('${t.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit"></i></button><button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fa fa-check-circle text-xl"></i></button></div></div><h4 class="font-bold text-slate-800">${t.title}</h4><p class="text-[10px] text-blue-500 mt-2 font-bold uppercase tracking-tighter italic">Lead: ${t.leads ? t.leads.name : 'General'}</p></div>`).join('');
+    container.innerHTML = list.map(t => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 border-l-4 ${t.priority === 'High' ? 'border-l-red-500' : 'border-l-blue-500'} shadow-sm"><div class="flex justify-between items-start mb-4"><span class="text-[10px] font-bold uppercase text-slate-400">${t.priority} Priority</span><div class="flex gap-2"><button onclick="window.editTask('${t.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit"></i></button><button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-check-circle text-xl"></i></button></div></div><h4 class="font-bold text-slate-800">${t.title}</h4><p class="text-[10px] text-blue-500 mt-2 uppercase font-bold italic">Lead: ${t.leads ? t.leads.name : 'General'}</p></div>`).join('');
 }
 
 function renderAppts(list) {
     const container = document.getElementById('apptsList');
-    container.innerHTML = list.map(a => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-6"><div class="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div><div><h4 class="font-bold text-slate-800 text-lg">${a.title}</h4><p class="text-xs text-slate-500 font-bold uppercase tracking-widest italic">Lead: ${a.leads ? a.leads.name : 'N/A'}</p><p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">${new Date(a.appt_date).toLocaleString()}</p></div></div><div class="flex gap-4 px-4"><button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit text-xl"></i></button><button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fa fa-trash text-xl"></i></button></div></div>`).join('');
+    container.innerHTML = list.map(a => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-6"><div class="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div><div><h4 class="font-bold text-slate-800 text-lg">${a.title}</h4><p class="text-xs text-slate-500 font-bold uppercase italic">Lead: ${a.leads ? a.leads.name : 'N/A'}</p><p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">${new Date(a.appt_date).toLocaleString()}</p></div></div><div class="flex gap-4 px-4"><button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit text-xl"></i></button><button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-trash text-xl"></i></button></div></div>`).join('');
 }
 
 window.editTask = async (id) => {
@@ -199,20 +214,13 @@ document.getElementById('csvFileInput').onchange = function(e) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
         const rows = ev.target.result.split('\n').slice(1);
-        const dataToInsert = rows.filter(r => r.trim()).map(r => {
+        const data = rows.filter(r => r.trim()).map(r => {
             const cols = r.split(',');
             return { name: cols[0], phone: cols[1], status: 'New', last_activity: new Date().toISOString() };
         });
-        await supabase.from('leads').insert(dataToInsert); loadData();
+        await supabase.from('leads').insert(data); loadData();
     };
     reader.readAsText(file);
-};
-
-window.filterStatus = (status) => {
-    document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-    const filtered = status === 'all' ? allLeads : allLeads.filter(l => l.status === status);
-    renderBoard(filtered);
 };
 
 window.deleteItem = async (table, id) => { if (confirm("Delete?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
