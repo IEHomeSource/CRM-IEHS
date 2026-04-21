@@ -2,8 +2,26 @@ import { supabase } from './config.js';
 
 let allLeads = [];
 
+const US_STATES = [
+    { n: "Alabama", s: "AL" }, { n: "Alaska", s: "AK" }, { n: "Arizona", s: "AZ" }, { n: "Arkansas", s: "AR" }, { n: "California", s: "CA" },
+    { n: "Colorado", s: "CO" }, { n: "Connecticut", s: "CT" }, { n: "Delaware", s: "DE" }, { n: "Florida", s: "FL" }, { n: "Georgia", s: "GA" },
+    { n: "Hawaii", s: "HI" }, { n: "Idaho", s: "ID" }, { n: "Illinois", s: "IL" }, { n: "Indiana", s: "IN" }, { n: "Iowa", s: "IA" },
+    { n: "Kansas", s: "KS" }, { n: "Kentucky", s: "KY" }, { n: "Louisiana", s: "LA" }, { n: "Maine", s: "ME" }, { n: "Maryland", s: "MD" },
+    { n: "Massachusetts", s: "MA" }, { n: "Michigan", s: "MI" }, { n: "Minnesota", s: "MN" }, { n: "Mississippi", s: "MS" }, { n: "Missouri", s: "MO" },
+    { n: "Montana", s: "MT" }, { n: "Nebraska", s: "NE" }, { n: "Nevada", s: "NV" }, { n: "New Hampshire", s: "NH" }, { n: "New Jersey", s: "NJ" },
+    { n: "New Mexico", s: "NM" }, { n: "New York", s: "NY" }, { n: "North Carolina", s: "NC" }, { n: "North Dakota", s: "ND" }, { n: "Ohio", s: "OH" },
+    { n: "Oklahoma", s: "OK" }, { n: "Oregon", s: "OR" }, { n: "Pennsylvania", s: "PA" }, { n: "Rhode Island", s: "RI" }, { n: "South Carolina", s: "SC" },
+    { n: "South Dakota", s: "SD" }, { n: "Tennessee", s: "TN" }, { n: "Texas", s: "TX" }, { n: "Utah", s: "UT" }, { n: "Vermont", s: "VT" },
+    { n: "Virginia", s: "VA" }, { n: "Washington", s: "WA" }, { n: "West Virginia", s: "WV" }, { n: "Wisconsin", s: "WI" }, { n: "Wyoming", s: "WY" }
+];
+
 // --- UI HELPERS ---
-window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+window.openModal = (id) => {
+    // Reset Edit IDs when opening for "New"
+    if(id === 'taskModal') { document.getElementById('tEditId').value = ""; document.getElementById('taskModalTitle').innerText = "New Task"; }
+    if(id === 'apptModal') { document.getElementById('aEditId').value = ""; document.getElementById('apptModalTitle').innerText = "New Appointment"; }
+    document.getElementById(id).classList.remove('hidden');
+};
 window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
 
 window.showSection = (name) => {
@@ -25,6 +43,12 @@ window.logout = async () => { await supabase.auth.signOut(); window.location.hre
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
+    
+    // Fill State Dropdowns
+    const stateSelects = document.querySelectorAll('.state-dropdown');
+    const stateOptions = US_STATES.map(s => `<option value="${s.s}">${s.n} (${s.s})</option>`).join('');
+    stateSelects.forEach(sel => sel.innerHTML = stateOptions);
+
     loadData();
 
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -46,7 +70,6 @@ async function loadData() {
     renderTagsNav(allLeads);
     updateSelects(allLeads);
     
-    // ACTUALIZAR CONTADORES EN PANTALLA
     document.getElementById('statLeads').innerText = allLeads.length;
     document.getElementById('statTasks').innerText = (tasksRes.data || []).length;
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
@@ -58,10 +81,10 @@ function renderLeads(list) {
     container.innerHTML = list.map(l => `
         <div onclick="window.viewDetails('${l.id}')" class="p-5 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center bg-white border-b border-slate-50 border-l-4 border-transparent hover:border-blue-500">
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold text-xs font-mono border">${l.name.substring(0,2).toUpperCase()}</div>
+                <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold text-xs border">${l.name.substring(0,2).toUpperCase()}</div>
                 <div>
-                    <p class="font-bold text-slate-800 text-base">${l.name}</p>
-                    <p class="text-xs text-slate-400 font-mono tracking-tighter">${l.phone} • ${l.state || 'N/A'}</p>
+                    <p class="font-bold text-slate-800">${l.name}</p>
+                    <p class="text-[10px] text-slate-400 font-mono">${l.phone} • ${l.state || 'N/A'}</p>
                 </div>
             </div>
             <div class="text-right">
@@ -87,7 +110,10 @@ function renderTasks(list) {
             <div class="bg-white p-6 rounded-[2rem] border border-slate-100 border-l-4 ${priorityColor} shadow-sm group hover:shadow-md transition-all">
                 <div class="flex justify-between items-start mb-4">
                     <span class="text-[10px] font-bold uppercase text-slate-400 tracking-widest">${t.priority} Priority</span>
-                    <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-200 hover:text-emerald-500 transition"><i class="fa fa-check-circle text-2xl"></i></button>
+                    <div class="flex gap-2">
+                        <button onclick="window.editTask('${t.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit"></i></button>
+                        <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-emerald-500 transition"><i class="fa fa-check-circle"></i></button>
+                    </div>
                 </div>
                 <h4 class="font-bold text-slate-800 text-lg">${t.title}</h4>
                 <div class="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
@@ -111,7 +137,10 @@ function renderAppts(list) {
                     <p class="text-[11px] text-emerald-600 font-bold mt-1 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full inline-block">${new Date(a.appt_date).toLocaleString()}</p>
                 </div>
             </div>
-            <button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-200 hover:text-red-500 transition px-4"><i class="fa fa-trash"></i></button>
+            <div class="flex gap-4 px-4">
+                <button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500 transition"><i class="fa fa-edit"></i></button>
+                <button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fa fa-trash"></i></button>
+            </div>
         </div>
     `).join('');
 }
@@ -124,12 +153,42 @@ window.viewDetails = async (id) => {
     document.getElementById('eId').value = lead.id;
     document.getElementById('eName').value = lead.name;
     document.getElementById('ePhone').value = lead.phone;
-    document.getElementById('eEmail').value = lead.email;
+    document.getElementById('eEmail').value = lead.email || "";
     document.getElementById('eState').value = lead.state || "TX";
     document.getElementById('eTags').value = (lead.tags || []).join(', ');
     document.getElementById('labelStatus').innerText = lead.status;
     document.getElementById('eStatus').value = lead.status;
     renderNotes(lead.notes);
+};
+
+window.editTask = async (id) => {
+    const { data: task } = await supabase.from('tasks').select('*').eq('id', id).single();
+    if(task) {
+        document.getElementById('tEditId').value = task.id;
+        document.getElementById('tTitle').value = task.title;
+        document.getElementById('tPriority').value = task.priority;
+        document.getElementById('tLeadId').value = task.lead_id || "";
+        document.getElementById('tDate').value = task.due_date || "";
+        document.getElementById('taskModalTitle').innerText = "Edit Task";
+        window.openModal('taskModal');
+    }
+};
+
+window.editAppt = async (id) => {
+    const { data: appt } = await supabase.from('appointments').select('*').eq('id', id).single();
+    if(appt) {
+        document.getElementById('aEditId').value = appt.id;
+        document.getElementById('aTitle').value = appt.title;
+        document.getElementById('aLeadId').value = appt.lead_id || "";
+        // Format datetime-local
+        if(appt.appt_date) {
+            const d = new Date(appt.appt_date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            document.getElementById('aDate').value = d.toISOString().slice(0, 16);
+        }
+        document.getElementById('apptModalTitle').innerText = "Edit Appointment";
+        window.openModal('apptModal');
+    }
 };
 
 window.saveLeadUpdates = async () => {
@@ -167,23 +226,47 @@ function renderNotes(fullText) {
     container.innerHTML = notesArray.reverse().map(n => `<div class="py-4 text-[13px] text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">${n.trim()}</div>`).join('');
 }
 
-// --- CREATION ---
+// --- CREATION / UPDATE LOGIC ---
 document.getElementById('saveLeadBtn').onclick = async () => {
-    const payload = { name: document.getElementById('lName').value, phone: document.getElementById('lPhone').value, state: document.getElementById('lState').value, status: 'New', last_activity: new Date().toISOString() };
+    const timestamp = new Date().toLocaleString();
+    const payload = { 
+        name: document.getElementById('lName').value, 
+        phone: document.getElementById('lPhone').value, 
+        email: document.getElementById('lEmail').value,
+        address: document.getElementById('lAddress').value,
+        zip_code: document.getElementById('lZip').value,
+        state: document.getElementById('lState').value, 
+        notes: document.getElementById('lNotes').value ? `\n[${timestamp}]: ${document.getElementById('lNotes').value} ---` : "",
+        status: 'New', 
+        last_activity: new Date().toISOString() 
+    };
+    if(!payload.name || !payload.phone) return alert("Name and Phone are mandatory.");
     const { error } = await supabase.from('leads').insert([payload]);
-    if (error) alert("Error: Duplicate phone found.");
+    if (error) alert("Error: Duplicate phone or database issue.");
     else { window.closeModal('leadModal'); loadData(); }
 };
 
 document.getElementById('saveTaskBtn').onclick = async () => {
+    const editId = document.getElementById('tEditId').value;
     const payload = { title: document.getElementById('tTitle').value, priority: document.getElementById('tPriority').value, lead_id: document.getElementById('tLeadId').value || null, due_date: document.getElementById('tDate').value };
-    await supabase.from('tasks').insert([payload]);
+    
+    if(editId) {
+        await supabase.from('tasks').update(payload).eq('id', editId);
+    } else {
+        await supabase.from('tasks').insert([payload]);
+    }
     window.closeModal('taskModal'); loadData();
 };
 
 document.getElementById('saveApptBtn').onclick = async () => {
+    const editId = document.getElementById('aEditId').value;
     const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
-    await supabase.from('appointments').insert([payload]);
+    
+    if(editId) {
+        await supabase.from('appointments').update(payload).eq('id', editId);
+    } else {
+        await supabase.from('appointments').insert([payload]);
+    }
     window.closeModal('apptModal'); loadData();
 };
 
