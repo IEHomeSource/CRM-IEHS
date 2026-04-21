@@ -2,144 +2,194 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard | IEHomeSource CRM</title>
+    <title>IEHomeSource CRM | Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .section { display: none; } .section.active { display: flex; }
         .sidebar-item.active { background: #1e293b; border-left: 4px solid #3b82f6; color: white; }
-        /* States dropdown look */
-        select { appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="gray" d="M7 7l3-3 3 3m0 6l-3 3-3-3"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; }
+        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-white text-slate-800 font-sans overflow-hidden">
 
     <div class="flex h-screen">
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full border-r border-slate-800">
-            <div class="p-6 text-lg font-bold text-white border-b border-slate-800">IEHomeSource</div>
+        <aside class="w-64 bg-[#0f172a] text-slate-400 flex flex-col h-full border-r border-slate-800 z-20">
+            <div class="p-6 text-lg font-bold text-white border-b border-slate-800 flex items-center gap-2">
+                <i class="fa fa-house-chimney text-blue-500 text-sm"></i> IEHomeSource
+            </div>
             <nav class="flex-1 mt-4 px-3 space-y-1">
                 <button onclick="window.showSection('Leads')" id="navLeads" class="sidebar-item active w-full flex items-center py-2 px-4 rounded hover:text-white transition text-sm">
-                    <i class="fa fa-users w-5 mr-2"></i> Leads
+                    <i class="fa fa-users w-5 mr-2 text-xs"></i> Leads & Pipeline
                 </button>
                 <button onclick="window.showSection('Tasks')" id="navTasks" class="sidebar-item w-full flex items-center py-2 px-4 rounded hover:text-white transition text-sm">
-                    <i class="fa fa-check-circle w-5 mr-2"></i> Tasks
+                    <i class="fa fa-check-circle w-5 mr-2 text-xs"></i> Tasks & To-Do
                 </button>
-                <div id="dynamicTags" class="mt-8 space-y-1">
-                    <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2">Smart Lists</p>
+                <button onclick="window.showSection('Calendar')" id="navCalendar" class="sidebar-item w-full flex items-center py-2 px-4 rounded hover:text-white transition text-sm">
+                    <i class="fa fa-calendar-alt w-5 mr-2 text-xs"></i> Appointments
+                </button>
+                
+                <div id="dynamicTags" class="mt-8 pt-4 border-t border-slate-800">
+                    <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Smart Lists</p>
                 </div>
             </nav>
-            <div class="p-4 border-t border-slate-800">
-                <button onclick="window.logout()" class="text-xs hover:text-white"><i class="fa fa-sign-out mr-2"></i>Logout</button>
+            <div class="p-4 border-t border-slate-800 flex justify-between items-center">
+                <button onclick="window.logout()" class="text-[10px] uppercase font-bold hover:text-white">Logout</button>
+                <span class="text-[10px] text-slate-600 italic">v2.1 Pro</span>
             </div>
         </aside>
 
         <!-- MAIN AREA -->
         <main class="flex-1 flex flex-col min-w-0 bg-white">
-            <header class="h-14 border-b flex items-center justify-between px-6">
-                <h2 id="viewTitle" class="text-sm font-bold uppercase tracking-widest text-slate-500">Leads Management</h2>
-                <div class="flex gap-2">
-                    <button onclick="window.openModal('leadModal')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow-sm hover:bg-blue-700">+ Add Lead</button>
+            <header class="h-14 border-b flex items-center justify-between px-6 bg-white z-10">
+                <div class="flex items-center gap-4">
+                    <h2 id="viewTitle" class="text-xs font-bold uppercase tracking-widest text-slate-500 italic">Leads</h2>
+                    <div class="h-4 w-[1px] bg-slate-200"></div>
+                    <div class="flex gap-1">
+                        <button onclick="filterStatus('all')" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-bold">ALL</button>
+                        <button onclick="filterStatus('New')" class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-bold">NEW</button>
+                        <button onclick="filterStatus('Closed')" class="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold">CLOSED</button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <i class="fa fa-search absolute left-3 top-2.5 text-slate-300 text-[10px]"></i>
+                        <input type="text" id="searchInput" placeholder="Search contact..." class="pl-8 pr-4 py-1.5 bg-slate-50 border border-slate-100 rounded text-xs outline-none w-48 focus:w-64 transition-all">
+                    </div>
+                    <button onclick="window.openModal('leadModal')" class="bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">+ New Lead</button>
                 </div>
             </header>
 
-            <!-- SPLIT VIEW CONTAINER -->
+            <!-- SECTION: LEADS (SPLIT VIEW) -->
             <div id="sectionLeads" class="section active flex-1 flex overflow-hidden">
-                <!-- LEFT: LIST -->
                 <div class="flex-1 overflow-y-auto border-r border-slate-100">
-                    <div id="leadsListContainer" class="divide-y divide-slate-100">
-                        <!-- Leads items will load here -->
+                    <div id="leadsListContainer" class="divide-y divide-slate-50">
+                        <!-- Leads load here -->
                     </div>
                 </div>
 
-                <!-- RIGHT: DETAILS PANEL (Asana Style) -->
-                <div id="detailsPanel" class="w-[450px] bg-slate-50 overflow-y-auto hidden">
+                <!-- RIGHT PANEL: CONTACT CARD (Asana style) -->
+                <div id="detailsPanel" class="w-[500px] bg-slate-50 overflow-y-auto hidden border-l shadow-2xl">
                     <div class="p-6">
-                        <div class="flex justify-between items-center mb-6 border-b pb-4">
-                            <h3 class="font-bold text-lg text-blue-600">Lead Information</h3>
-                            <button onclick="document.getElementById('detailsPanel').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fa fa-times"></i></button>
+                        <div class="flex justify-between items-center mb-6">
+                            <span id="labelStatus" class="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white uppercase">New Lead</span>
+                            <button onclick="document.getElementById('detailsPanel').classList.add('hidden')" class="text-slate-400"><i class="fa fa-times"></i></button>
                         </div>
                         
                         <input type="hidden" id="eId">
-                        <div class="space-y-4">
-                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Name</label><input type="text" id="eName" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none font-bold text-lg focus:border-blue-500"></div>
-                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input type="text" id="ePhone" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none font-mono"></div>
-                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Email</label><input type="text" id="eEmail" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none"></div>
-                            
+                        <input type="text" id="eName" class="w-full bg-transparent text-2xl font-bold border-none outline-none focus:ring-0 mb-1" placeholder="Lead Name">
+                        <p id="lastActivityLabel" class="text-[10px] text-slate-400 mb-6 italic">Last activity: Just now</p>
+
+                        <!-- Tabs inside Drawer -->
+                        <div class="flex gap-4 border-b border-slate-200 mb-6">
+                            <button onclick="showTab('info')" id="tabInfo" class="tab-btn active pb-2 text-xs uppercase tracking-wider">Info</button>
+                            <button onclick="showTab('notes')" id="tabNotes" class="tab-btn pb-2 text-xs uppercase tracking-wider">Activity/Notes</button>
+                        </div>
+
+                        <!-- Tab Content: Info -->
+                        <div id="contentInfo" class="space-y-6">
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase">Status</label>
-                                    <select id="eStatus" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none">
-                                        <option value="New">New</option>
-                                        <option value="Negotiating">Negotiating</option>
-                                        <option value="Closed">Closed</option>
-                                    </select>
-                                </div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Phone</label><input type="text" id="ePhone" class="w-full bg-transparent border-b py-1 outline-none font-mono text-sm"></div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Email</label><input type="text" id="eEmail" class="w-full bg-transparent border-b py-1 outline-none text-sm"></div>
                                 <div>
                                     <label class="text-[10px] font-bold text-slate-400 uppercase">State</label>
-                                    <select id="eState" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none">
-                                        <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option><option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option><option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+                                    <select id="eState" class="w-full bg-transparent border-b py-1 outline-none text-sm">
+                                        <option value="TX">TX</option><option value="FL">FL</option><option value="CA">CA</option><option value="NY">NY</option><option value="GA">GA</option><option value="AZ">AZ</option>
                                     </select>
                                 </div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Zip Code</label><input type="text" id="eZip" class="w-full bg-transparent border-b py-1 outline-none text-sm"></div>
                             </div>
-                            
-                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Tags (comma separated)</label><input type="text" id="eTags" class="w-full bg-transparent border-b border-slate-200 py-1 outline-none"></div>
-                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Notes</label><textarea id="eNotes" class="w-full bg-white border border-slate-200 rounded p-3 mt-1 h-48 outline-none text-sm"></textarea></div>
-                            <button id="updateLeadBtn" class="w-full bg-blue-600 text-white py-3 rounded font-bold shadow-lg hover:bg-blue-700 transition">Update Record</button>
-                            <button onclick="window.deleteLead(document.getElementById('eId').value)" class="w-full text-red-500 text-xs font-bold py-2 mt-4 hover:underline">Delete Lead Permanently</button>
+                            <div><label class="text-[10px] font-bold text-slate-400 uppercase">Tags</label><input type="text" id="eTags" class="w-full bg-transparent border-b py-1 outline-none text-xs text-blue-600 font-bold"></div>
+                            <button onclick="window.saveLeadUpdates()" class="w-full bg-slate-800 text-white py-3 rounded font-bold text-sm shadow-lg hover:bg-black transition">Update Info</button>
+                        </div>
+
+                        <!-- Tab Content: Notes/Timeline -->
+                        <div id="contentNotes" class="hidden space-y-4">
+                            <textarea id="newNote" placeholder="Write an update about this lead..." class="w-full p-3 border rounded-xl text-sm outline-none focus:ring-1 focus:ring-blue-500 h-24 bg-white"></textarea>
+                            <button onclick="window.addNote()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-xs">Add Activity Note</button>
+                            <div id="notesHistory" class="space-y-3 pt-4 divide-y">
+                                <!-- Notes stack here -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TASKS SECTION (SIMPLIFIED) -->
-            <div id="sectionTasks" class="section flex-1 hidden flex-col p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold">Team Tasks</h3>
-                    <button onclick="window.openModal('taskModal')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs">+ New Task</button>
+            <!-- SECTION: TASKS -->
+            <div id="sectionTasks" class="section flex-1 hidden flex-col p-8 overflow-y-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="font-bold text-lg uppercase tracking-tight">Tasks Management</h3>
+                    <button onclick="window.openModal('taskModal')" class="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold">+ Create Task</button>
                 </div>
-                <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- SECTION: CALENDAR (APPOINTMENTS) -->
+            <div id="sectionCalendar" class="section flex-1 hidden flex-col p-8 overflow-y-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="font-bold text-lg uppercase tracking-tight">Appointments & Meetings</h3>
+                    <button onclick="window.openModal('apptModal')" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold">+ Schedule</button>
+                </div>
+                <div id="apptsList" class="space-y-3 max-w-2xl"></div>
             </div>
         </main>
     </div>
 
-    <!-- MODAL: ADD LEAD -->
+    <!-- MODAL: NEW LEAD -->
     <div id="leadModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold mb-6">New Lead</h3>
+            <h3 class="text-xl font-bold mb-6">Quick Add Contact</h3>
             <div class="space-y-4">
-                <input type="text" id="lName" placeholder="Name" class="w-full p-3 border rounded-xl outline-none">
-                <input type="text" id="lPhone" placeholder="Phone" class="w-full p-3 border rounded-xl outline-none">
-                <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 border rounded-xl outline-none">
-                <select id="lState" class="w-full p-3 border rounded-xl outline-none">
-                    <option value="">Select State</option>
-                    <option value="TX">TX</option><option value="FL">FL</option><option value="CA">CA</option><option value="NY">NY</option> <!-- Agrega los que uses más -->
-                </select>
-                <textarea id="lNotes" placeholder="Notes..." class="w-full p-3 border rounded-xl outline-none"></textarea>
+                <input type="text" id="lName" placeholder="Full Name" class="w-full p-3 border rounded outline-none focus:ring-1 focus:ring-blue-500">
+                <input type="text" id="lPhone" placeholder="Phone Number" class="w-full p-3 border rounded outline-none focus:ring-1 focus:ring-blue-500">
+                <select id="lState" class="w-full p-3 border rounded bg-white"><option value="TX">Texas (TX)</option><option value="FL">Florida (FL)</option><option value="CA">California (CA)</option></select>
             </div>
             <div class="flex justify-end gap-3 mt-8">
-                <button onclick="window.closeModal('leadModal')" class="text-slate-500 font-bold">Cancel</button>
-                <button id="saveLeadBtn" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Save</button>
+                <button onclick="window.closeModal('leadModal')" class="text-xs font-bold text-slate-400 uppercase">Cancel</button>
+                <button id="saveLeadBtn" class="bg-blue-600 text-white px-6 py-2 rounded font-bold text-xs uppercase shadow-lg shadow-blue-100">Create Lead</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: ADD TASK -->
+    <!-- MODAL: NEW TASK -->
     <div id="taskModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white p-8 rounded-2xl w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4">New Task</h3>
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">New Task</h3>
             <div class="space-y-4">
-                <input type="text" id="tTitle" placeholder="What to do?" class="w-full p-3 border rounded-xl outline-none">
-                <select id="tLeadId" class="w-full p-3 border rounded-xl outline-none"></select>
-                <input type="date" id="tDate" class="w-full p-3 border rounded-xl outline-none">
+                <input type="text" id="tTitle" placeholder="What to do?" class="w-full p-3 border rounded outline-none">
+                <select id="tPriority" class="w-full p-3 border rounded"><option value="Low">Low Priority</option><option value="Medium">Medium Priority</option><option value="High">High Priority 🔥</option></select>
+                <select id="tLeadId" class="w-full p-3 border rounded"></select>
+                <input type="date" id="tDate" class="w-full p-3 border rounded">
             </div>
-            <div class="flex justify-end gap-3 mt-6">
-                <button onclick="window.closeModal('taskModal')" class="text-slate-500 font-bold">Cancel</button>
-                <button id="saveTaskBtn" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Save</button>
+            <div class="flex justify-end gap-3 mt-6"><button onclick="window.closeModal('taskModal')" class="text-xs font-bold">Cancel</button><button id="saveTaskBtn" class="bg-blue-600 text-white px-6 py-2 rounded font-bold">Save</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: NEW APPOINTMENT -->
+    <div id="apptModal" class="fixed inset-0 bg-slate-900/70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Schedule Appointment</h3>
+            <div class="space-y-4">
+                <input type="text" id="aTitle" placeholder="Meeting Title (e.g. Closing Call)" class="w-full p-3 border rounded outline-none">
+                <select id="aLeadId" class="w-full p-3 border rounded"></select>
+                <input type="datetime-local" id="aDate" class="w-full p-3 border rounded">
             </div>
+            <div class="flex justify-end gap-3 mt-6"><button onclick="window.closeModal('apptModal')" class="text-xs font-bold">Cancel</button><button id="saveApptBtn" class="bg-emerald-600 text-white px-6 py-2 rounded font-bold">Schedule</button></div>
         </div>
     </div>
 
     <script type="module" src="app.js"></script>
+    <script>
+        window.showTab = (tab) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            document.getElementById('contentInfo').classList.add('hidden');
+            document.getElementById('contentNotes').classList.add('hidden');
+            document.getElementById('content' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
