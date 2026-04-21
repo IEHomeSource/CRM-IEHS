@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-transparent p-4">
+    <form id="publicForm" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
+        <h2 class="text-xl font-bold text-slate-800">Get a Quote</h2>
+        <input type="text" id="name" placeholder="Full Name" required class="w-full p-3 border rounded-lg outline-blue-500">
+        <input type="text" id="phone" placeholder="Phone Number" required class="w-full p-3 border rounded-lg outline-blue-500">
+        <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-blue-500">
+        <textarea id="notes" placeholder="How can we help?" class="w-full p-3 border rounded-lg h-24"></textarea>
+        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Submit Request</button>
+        <p id="msg" class="text-center text-sm hidden"></p>
+    </form>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        const supabase = createClient('https://uiejwoonkrwmqomckxsp.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpZWp3b29ua3J3bXFvbWNreHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzU0ODEsImV4cCI6MjA5MTk1MTQ4MX0.vCuII5ND7cl0YPUrnHkSRqfn7tXun8ERqlkuRXjsi70')
+
+        document.getElementById('publicForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true; btn.innerText = "Sending...";
+
+            const { error } = await supabase.from('leads').insert([{
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                notes: document.getElementById('notes').value,
+                tags: ['Web Lead'], status: 'New'
+            }]);
+
+            if (error) {
+                alert("Error: " + error.message);
+                btn.disabled = false; btn.innerText = "Submit Request";
+            } else {
+                document.getElementById('publicForm').classList.add('hidden');
+                document.getElementById('msg').innerText = "Thanks! We'll contact you soon.";
+                document.getElementById('msg').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
