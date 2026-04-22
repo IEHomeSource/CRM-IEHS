@@ -7,38 +7,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #1e293b; }
         
-        /* Sidebar Styling based on your image */
-        .ghl-sidebar { width: 280px; background: #0f172a; height: 100vh; flex-shrink: 0; display: flex; flex-direction: column; }
+        /* Sidebar Styling */
+        .ghl-sidebar { width: 260px; background: #0f172a; height: 100vh; flex-shrink: 0; display: flex; flex-direction: column; }
         .nav-item { color: #94a3b8; padding: 12px 20px; margin: 4px 16px; border-radius: 12px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
         .nav-item:hover { background: #1e293b; color: white; }
-        .nav-item.active { background: #1e293b; color: white; border-left: 4px solid #3b82f6; }
+        .nav-item.active { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
         
         .section { display: none; height: calc(100vh - 64px); flex-direction: column; }
         .section.active { display: flex; }
 
-        .kanban-column { min-width: 320px; width: 320px; background: #e2e8f0; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; height: 100%; }
+        /* Kanban Columns */
+        .kanban-column { min-width: 320px; width: 320px; background: #e5e7eb; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; height: 100%; }
         
-        /* Custom scrollbar */
+        /* Tag Filter Pills */
+        .tag-pill { padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; background: white; color: #64748b; white-space: nowrap; }
+        .tag-pill:hover { border-color: #3b82f6; color: #3b82f6; }
+        .tag-pill.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        .smart-list-header { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; text-align: center; font-style: italic; margin: 30px 0 15px 0; }
     </style>
 </head>
 <body class="overflow-hidden">
 
     <div class="flex h-screen w-full">
         <!-- SIDEBAR -->
-        <aside class="ghl-sidebar shadow-2xl">
+        <aside class="ghl-sidebar shadow-2xl z-50">
             <div class="p-8 flex items-center gap-3">
-                <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-900/20"><i class="fa fa-home text-white"></i></div>
+                <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg"><i class="fa fa-home text-white"></i></div>
                 <span class="text-white font-bold text-xl tracking-tight">IEHomeSource</span>
             </div>
             
-            <nav class="flex-1 overflow-y-auto">
+            <nav class="flex-1 mt-4">
                 <div id="navLeads" onclick="window.showSection('Leads')" class="nav-item active">
                     <i class="fa fa-columns w-5"></i> Pipeline Board
                 </div>
@@ -48,25 +51,16 @@
                 <div id="navCalendar" onclick="window.showSection('Calendar')" class="nav-item">
                     <i class="fa fa-calendar-alt w-5"></i> Appointments
                 </div>
-
-                <div class="smart-list-header">Smart Lists</div>
-                
-                <div id="navTagAll" onclick="window.filterByTag('all')" class="nav-item text-xs font-bold uppercase italic">
-                    # SHOW ALL
-                </div>
-                <div id="tagNavContainer">
-                    <!-- Unique tags injected here -->
-                </div>
             </nav>
 
             <div class="p-6 border-t border-slate-800">
-                <button onclick="window.logout()" class="text-slate-500 hover:text-white text-xs font-bold flex items-center gap-2 uppercase tracking-widest">
+                <button onclick="window.logout()" class="text-slate-500 hover:text-white text-xs font-bold flex items-center gap-2 uppercase tracking-widest transition">
                     <i class="fa fa-sign-out-alt"></i> Logout
                 </button>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
+        <!-- MAIN -->
         <main class="flex-1 flex flex-col min-w-0">
             <header class="h-16 bg-white border-b flex items-center justify-between px-8 z-40">
                 <div class="flex items-center gap-4">
@@ -81,12 +75,11 @@
                 <div class="flex items-center gap-4">
                     <div class="relative">
                         <i class="fa fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                        <input type="text" id="searchInput" placeholder="Search..." class="pl-11 pr-4 py-2 bg-slate-50 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 border border-slate-200">
+                        <input type="text" id="searchInput" placeholder="Search leads..." class="pl-11 pr-4 py-2 bg-slate-50 rounded-full text-sm outline-none border border-slate-200 focus:ring-2 focus:ring-blue-500 w-64">
                     </div>
                     
-                    <!-- EXCEL IMPORT -->
                     <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
-                    <button onclick="document.getElementById('csvFileInput').click()" class="text-slate-400 hover:text-emerald-600 transition p-2" title="Import Excel/CSV">
+                    <button onclick="document.getElementById('csvFileInput').click()" class="text-slate-400 hover:text-emerald-600 transition p-2" title="Import Excel">
                         <i class="fa fa-file-excel text-xl"></i>
                     </button>
 
@@ -98,32 +91,40 @@
                             + New Task
                         </button>
                         <button id="btnNewAppt" onclick="window.openModal('apptModal')" class="bg-emerald-600 text-white px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hidden shadow-lg">
-                            + New Appt
+                            + New Appointment
                         </button>
                     </div>
                 </div>
             </header>
 
+            <!-- SMART LIST TAG FILTER BAR (INTERNAL) -->
+            <div id="filterBar" class="bg-white border-b px-8 py-3 flex items-center gap-3 overflow-x-auto">
+                <span class="text-[10px] font-black text-slate-400 uppercase italic mr-2">Smart Filter:</span>
+                <div id="tagPillsContainer" class="flex gap-2">
+                    <!-- Dynamic Pills -->
+                </div>
+            </div>
+
             <div class="flex-1 overflow-hidden relative">
-                <!-- LEADS -->
+                <!-- SECTION LEADS -->
                 <section id="sectionLeads" class="section active overflow-x-auto p-6">
                     <div class="flex gap-6 h-full items-start">
                         <div class="kanban-column">
-                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500 tracking-tighter">New Leads</h3><span id="countNew" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-blue-600">0</span></div>
+                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500">New Leads</h3><span id="countNew" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-blue-600">0</span></div>
                             <div id="colNew" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
                         <div class="kanban-column">
-                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500 tracking-tighter">Negotiating</h3><span id="countNegotiating" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-orange-600">0</span></div>
+                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500">Negotiating</h3><span id="countNegotiating" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-orange-600">0</span></div>
                             <div id="colNegotiating" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
                         <div class="kanban-column">
-                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500 tracking-tighter">Closed Won</h3><span id="countClosed" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-emerald-600">0</span></div>
+                            <div class="flex justify-between items-center mb-4 px-2"><h3 class="font-black uppercase text-[10px] text-slate-500">Closed Won</h3><span id="countClosed" class="bg-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm text-emerald-600">0</span></div>
                             <div id="colClosed" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- TASKS -->
+                <!-- SECTION TASKS -->
                 <section id="sectionTasks" class="section p-10 overflow-y-auto bg-slate-50">
                     <div class="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div><h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-6 italic">Active Tasks</h3><div id="tasksList" class="space-y-4"></div></div>
@@ -131,7 +132,7 @@
                     </div>
                 </section>
 
-                <!-- APPOINTMENTS -->
+                <!-- SECTION CALENDAR -->
                 <section id="sectionCalendar" class="section p-10 overflow-y-auto bg-slate-50">
                     <div id="apptsList" class="space-y-4 max-w-4xl mx-auto w-full"></div>
                 </section>
@@ -171,12 +172,12 @@
                 <div class="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300">
                     <label class="text-[9px] font-black text-slate-400 uppercase block mb-4 italic tracking-widest">Activity History</label>
                     <textarea id="newNote" placeholder="Add update..." class="w-full p-4 bg-white border rounded-xl h-24 mb-4 outline-none text-sm shadow-sm"></textarea>
-                    <button onclick="window.addNote()" class="bg-blue-600 text-white w-full py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-md">Post Note</button>
+                    <button onclick="window.addNote()" class="bg-blue-600 text-white w-full py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest">Post Note</button>
                     <div id="notesHistory" class="mt-6 space-y-4 divide-y divide-slate-100"></div>
                 </div>
                 
-                <button onclick="window.saveLeadUpdates()" class="bg-slate-900 text-white w-full py-4 rounded-xl font-bold shadow-xl hover:bg-black transition uppercase tracking-widest text-xs">Update Everything</button>
-                <button onclick="window.deleteItem('leads', document.getElementById('eId').value)" class="text-red-400 w-full text-[10px] font-bold uppercase py-4 hover:underline">Delete Lead Permanently</button>
+                <button onclick="window.saveLeadUpdates()" class="bg-slate-900 text-white w-full py-4 rounded-xl font-bold shadow-xl uppercase tracking-widest text-xs">Update Everything</button>
+                <button onclick="window.deleteItem('leads', document.getElementById('eId').value)" class="text-red-400 w-full text-[10px] font-bold uppercase py-4 hover:underline">Delete Lead</button>
             </div>
         </div>
     </div>
@@ -207,16 +208,16 @@
             <h3 id="taskTitleHeader" class="text-xl font-black mb-6 uppercase italic tracking-widest">Task</h3>
             <input type="hidden" id="tEditId">
             <div class="space-y-4">
-                <input type="text" id="tTitle" placeholder="What needs to be done?" class="w-full p-4 bg-slate-50 rounded-xl border outline-none">
+                <input type="text" id="tTitle" placeholder="Task..." class="w-full p-4 bg-slate-50 rounded-xl border outline-none">
                 <select id="tPriority" class="w-full p-4 bg-slate-50 rounded-xl border outline-none font-bold">
-                    <option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High Priority 🔥</option>
+                    <option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High 🔥</option>
                 </select>
                 <select id="tLeadId" class="w-full p-4 bg-slate-50 rounded-xl border outline-none"></select>
                 <input type="date" id="tDate" class="w-full p-4 bg-slate-50 rounded-xl border outline-none">
             </div>
             <div class="flex justify-end gap-4 mt-8">
                 <button onclick="window.closeModal('taskModal')" class="font-bold text-slate-400 uppercase text-xs">Cancel</button>
-                <button id="saveTaskBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold uppercase text-xs">Save Task</button>
+                <button id="saveTaskBtn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold uppercase text-xs">Save</button>
             </div>
         </div>
     </div>
@@ -232,7 +233,7 @@
             </div>
             <div class="flex justify-end gap-4 mt-8">
                 <button onclick="window.closeModal('apptModal')" class="font-bold text-slate-400 uppercase text-xs">Close</button>
-                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest">Schedule</button>
+                <button id="saveApptBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold uppercase text-xs">Schedule</button>
             </div>
         </div>
     </div>
