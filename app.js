@@ -3,20 +3,23 @@ import { supabase } from './config.js';
 let allLeads = [];
 let currentTagFilter = 'all';
 
-// --- CORE NAVIGATION EXPOSURE ---
-// We must attach functions to window because this is a module
+// --- NAVIGATION ---
 window.showSection = (name) => {
-    console.log("Navigating to:", name);
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     
     document.getElementById('section' + name).classList.add('active');
     document.getElementById('nav' + name).classList.add('active');
     
-    // Update Header
+    // Header Logic
     document.getElementById('viewTitle').innerText = (name === 'Leads') ? 'Lead Pipeline' : name;
     
-    // Header Buttons logic
+    // Show/Hide Filter Bar only on Leads section
+    const filterBar = document.getElementById('filterBar');
+    if(name === 'Leads') filterBar.classList.remove('hidden');
+    else filterBar.classList.add('hidden');
+
+    // Button Visibility
     document.getElementById('btnNewLead').classList.add('hidden');
     document.getElementById('btnNewTask').classList.add('hidden');
     document.getElementById('btnNewAppt').classList.add('hidden');
@@ -29,8 +32,6 @@ window.showSection = (name) => {
 };
 
 window.openModal = (id) => {
-    if(id === 'taskModal' && !document.getElementById('tEditId').value) { document.getElementById('taskTitleHeader').innerText = "New Task"; }
-    if(id === 'apptModal' && !document.getElementById('aEditId').value) { document.getElementById('apptTitleHeader').innerText = "New Appointment"; }
     document.getElementById(id).classList.remove('hidden');
 };
 
@@ -43,24 +44,13 @@ window.closeModal = (id) => {
 window.logout = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
 // --- DATA ENGINE ---
-
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
     
     loadData();
 
-    // Search bar logic
-    document.getElementById('searchInput').oninput = (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allLeads.filter(l => 
-            (l.name && l.name.toLowerCase().includes(term)) || 
-            (l.phone && l.phone.includes(term))
-        );
-        renderBoard(filtered);
-    };
-
-    // RESTORED EXCEL LOGIC
+    // Excel Logic
     document.getElementById('csvFileInput').onchange = function(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
@@ -68,19 +58,22 @@ async function init() {
             const rows = ev.target.result.split('\n').slice(1);
             const dataToInsert = rows.filter(r => r.trim()).map(r => {
                 const cols = r.split(',');
-                return { 
-                    name: cols[0], 
-                    phone: cols[1], 
-                    email: cols[2] || '', 
-                    status: 'New', 
-                    last_activity: new Date().toISOString() 
-                };
+                return { name: cols[0], phone: cols[1], email: cols[2] || '', status: 'New', last_activity: new Date().toISOString() };
             });
-            const { error } = await supabase.from('leads').insert(dataToInsert);
-            if (error) alert("Excel Error: " + error.message);
-            else { alert("Import Successful!"); loadData(); }
+            await supabase.from('leads').insert(dataToInsert);
+            loadData();
         };
         reader.readAsText(file);
+    };
+
+    // Search Logic
+    document.getElementById('searchInput').oninput = (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = allLeads.filter(l => 
+            (l.name && l.name.toLowerCase().includes(term)) || 
+            (l.phone && l.phone.includes(term))
+        );
+        renderBoard(filtered);
     };
 }
 
@@ -94,7 +87,7 @@ async function loadData() {
     renderBoard(allLeads);
     renderTasks(tasksRes.data || []);
     renderAppts(apptsRes.data || []);
-    renderTagsNav(allLeads);
+    renderTagPills(allLeads); // Internal filter bar
     updateSelects(allLeads);
     
     document.getElementById('statLeads').innerText = allLeads.length;
@@ -102,7 +95,33 @@ async function loadData() {
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
 }
 
-// --- RENDERERS ---
+// --- RENDERING ---
+
+/**
+ * Renders the Internal Tag Filter Bar (Pills)
+ */
+function renderTagPills(data) {
+    const allTags = data.flatMap(l => l.tags || []);
+    const uniqueTags = [...new Set(allTags.map(t => t.trim()).filter(t => t !== ""))];
+    
+    const container = document.getElementById('tagPillsContainer');
+    // Always add "ALL" pill
+    let html = `<div onclick="window.filterByTag('all')" class="tag-pill ${currentTagFilter === 'all' ? 'active' : ''}">ALL LEADS</div>`;
+    
+    html += uniqueTags.map(tag => `
+        <div onclick="window.filterByTag('${tag}')" class="tag-pill ${currentTagFilter === tag ? 'active' : ''}">
+            # ${tag.toUpperCase()}
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+window.filterByTag = (tag) => {
+    currentTagFilter = tag;
+    renderTagPills(allLeads);
+    renderBoard(allLeads);
+};
 
 function renderBoard(list) {
     const filtered = currentTagFilter === 'all' ? list : list.filter(l => (l.tags || []).includes(currentTagFilter));
@@ -124,7 +143,7 @@ function renderBoard(list) {
                 <p class="font-bold text-slate-800 text-sm">${l.name || 'Unnamed'}</p>
                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-black uppercase">${l.state || '--'}</span>
             </div>
-            <p class="text-[10px] text-slate-400 font-bold mb-3"><i class="fa fa-phone mr-1"></i> ${l.phone || 'No phone'}</p>
+            <p class="text-[10px] text-slate-400 font-bold mb-3"><i class="fa fa-phone mr-1 text-[8px]"></i> ${l.phone || 'No phone'}</p>
             <div class="flex flex-wrap gap-1">
                 ${(l.tags || []).map(t => `<span class="bg-blue-50 text-blue-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">#${t}</span>`).join('')}
             </div>
@@ -136,27 +155,6 @@ function renderBoard(list) {
     document.getElementById('countNegotiating').innerText = counts['Negotiating'];
     document.getElementById('countClosed').innerText = counts['Closed'];
 }
-
-function renderTagsNav(data) {
-    const allTags = data.flatMap(l => l.tags || []);
-    const uniqueTags = [...new Set(allTags.map(t => t.trim()).filter(t => t !== ""))];
-    
-    const container = document.getElementById('tagNavContainer');
-    container.innerHTML = uniqueTags.map(tag => `
-        <div onclick="window.filterByTag('${tag}')" id="navTag-${tag}" class="nav-item text-xs font-bold uppercase italic">
-            <i class="fa fa-hashtag"></i> ${tag}
-        </div>
-    `).join('');
-}
-
-window.filterByTag = (tag) => {
-    currentTagFilter = tag;
-    window.showSection('Leads');
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    if(tag === 'all') document.getElementById('navTagAll').classList.add('active');
-    else document.getElementById(`navTag-${tag}`)?.classList.add('active');
-    renderBoard(allLeads);
-};
 
 function renderTasks(list) {
     const pending = document.getElementById('tasksList');
@@ -210,8 +208,7 @@ function renderAppts(list) {
     `).join('');
 }
 
-// --- CRUD OPERATIONS ---
-
+// --- CRUD ---
 window.viewDetails = async (id) => {
     const lead = allLeads.find(l => l.id === id);
     if (!lead) return;
@@ -229,7 +226,7 @@ window.viewDetails = async (id) => {
 
 function renderHistory(fullText) {
     const container = document.getElementById('notesHistory');
-    if (!fullText) { container.innerHTML = "<p class='text-[10px] text-slate-300 italic'>No activity logs.</p>"; return; }
+    if (!fullText) { container.innerHTML = "<p class='text-[10px] text-slate-300 italic'>No logs.</p>"; return; }
     const notes = fullText.split('---').filter(n => n.trim() !== "");
     container.innerHTML = notes.reverse().map(n => `<div class="py-3 text-[11px] text-slate-600 leading-relaxed font-medium">${n.trim()}</div>`).join('');
 }
@@ -237,17 +234,14 @@ function renderHistory(fullText) {
 window.saveLeadUpdates = async () => {
     const id = document.getElementById('eId').value;
     const payload = {
-        name: document.getElementById('eName').value, 
-        phone: document.getElementById('ePhone').value,
-        email: document.getElementById('eEmail').value, 
-        address: document.getElementById('eAddress').value,
-        state: document.getElementById('eState').value, 
-        status: document.getElementById('eStatus').value,
+        name: document.getElementById('eName').value, phone: document.getElementById('ePhone').value,
+        email: document.getElementById('eEmail').value, address: document.getElementById('eAddress').value,
+        state: document.getElementById('eState').value, status: document.getElementById('eStatus').value,
         tags: document.getElementById('eTags').value.split(',').map(t => t.trim()).filter(t => t !== ""),
         last_activity: new Date().toISOString()
     };
-    const { error } = await supabase.from('leads').update(payload).eq('id', id);
-    if (error) alert(error.message); else { alert("Lead Updated!"); loadData(); }
+    await supabase.from('leads').update(payload).eq('id', id);
+    loadData(); alert("Updated!");
 };
 
 window.addNote = async () => {
@@ -260,8 +254,6 @@ window.addNote = async () => {
     document.getElementById('newNote').value = ""; loadData(); window.viewDetails(id);
 };
 
-// --- CREATION HANDLERS ---
-
 document.getElementById('saveLeadBtn').onclick = async () => {
     const payload = { 
         name: document.getElementById('lName').value, phone: document.getElementById('lPhone').value, 
@@ -270,7 +262,6 @@ document.getElementById('saveLeadBtn').onclick = async () => {
         notes: document.getElementById('lNotes').value ? `\n[${new Date().toLocaleString()}]: ${document.getElementById('lNotes').value} ---` : "",
         status: 'New', last_activity: new Date().toISOString() 
     };
-    if(!payload.name || !payload.phone) return alert("Name/Phone required.");
     await supabase.from('leads').insert([payload]);
     window.closeModal('leadModal'); loadData();
 };
@@ -291,8 +282,6 @@ document.getElementById('saveApptBtn').onclick = async () => {
     window.closeModal('apptModal'); loadData();
 };
 
-// --- UTILS ---
-
 window.editTask = async (id) => {
     const { data: t } = await supabase.from('tasks').select('*').eq('id', id).single();
     if(t) { 
@@ -301,7 +290,6 @@ window.editTask = async (id) => {
         document.getElementById('tPriority').value = t.priority; 
         document.getElementById('tLeadId').value = t.lead_id || ""; 
         document.getElementById('tDate').value = t.due_date || ""; 
-        document.getElementById('taskTitleHeader').innerText = "Edit Task"; 
         window.openModal('taskModal'); 
     }
 };
@@ -317,7 +305,6 @@ window.editAppt = async (id) => {
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
             document.getElementById('aDate').value = d.toISOString().slice(0, 16);
         }
-        document.getElementById('apptTitleHeader').innerText = "Edit Appt"; 
         window.openModal('apptModal'); 
     }
 };
@@ -328,6 +315,6 @@ function updateSelects(leads) {
     document.getElementById('aLeadId').innerHTML = options;
 }
 
-window.deleteItem = async (table, id) => { if (confirm("Delete this?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
+window.deleteItem = async (table, id) => { if (confirm("Delete?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
 
 init();
