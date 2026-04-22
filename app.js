@@ -3,31 +3,61 @@ import { supabase } from './config.js';
 let allLeads = [];
 let currentTagFilter = 'all';
 
-// --- UI NAVIGATION ---
+// --- NAVIGATION & UI ENGINE ---
+
+/**
+ * Handle navigation between main sections and update header buttons
+ * @param {string} name - The section name (Leads, Tasks, Calendar)
+ */
+window.showSection = (name) => {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    // Remove active style from all nav items
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    
+    // Show selected section
+    document.getElementById('section' + name).classList.add('active');
+    document.getElementById('nav' + name).classList.add('active');
+    
+    // Update Header Title
+    const titleMap = { 'Leads': 'Lead Pipeline', 'Tasks': 'Task Management', 'Calendar': 'Appointments' };
+    document.getElementById('viewTitle').innerText = titleMap[name];
+
+    // Show/Hide Header Action Buttons based on section
+    document.getElementById('btnNewLead').classList.add('hidden');
+    document.getElementById('btnNewTask').classList.add('hidden');
+    document.getElementById('btnNewAppt').classList.add('hidden');
+
+    if(name === 'Leads') document.getElementById('btnNewLead').classList.remove('hidden');
+    if(name === 'Tasks') document.getElementById('btnNewTask').classList.remove('hidden');
+    if(name === 'Calendar') document.getElementById('btnNewAppt').classList.remove('hidden');
+
+    document.getElementById('detailsPanel').classList.add('hidden');
+};
+
 window.openModal = (id) => {
     if(id === 'taskModal' && !document.getElementById('tEditId').value) { document.getElementById('taskTitleHeader').innerText = "New Task"; }
     if(id === 'apptModal' && !document.getElementById('aEditId').value) { document.getElementById('apptTitleHeader').innerText = "New Appointment"; }
     document.getElementById(id).classList.remove('hidden');
 };
+
 window.closeModal = (id) => {
     if(id === 'taskModal') document.getElementById('tEditId').value = "";
     if(id === 'apptModal') document.getElementById('aEditId').value = "";
     document.getElementById(id).classList.add('hidden');
 };
-window.showSection = (name) => {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-    document.getElementById('section' + name).classList.add('active');
-    document.getElementById('nav' + name).classList.add('active');
-    document.getElementById('detailsPanel').classList.add('hidden');
-};
+
 window.logout = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
-// --- DATA ENGINE ---
+// --- DATA INITIALIZATION ---
+
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
+    
     loadData();
+
+    // Search functionality
     document.getElementById('searchInput').oninput = (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = allLeads.filter(l => 
@@ -39,23 +69,30 @@ async function init() {
 }
 
 async function loadData() {
+    // Fetch all data from Supabase
     const leadsRes = await supabase.from('leads').select('*').order('last_activity', { ascending: false });
-    const tasksRes = await supabase.from('tasks').select('*, leads(name)');
+    const tasksRes = await supabase.from('tasks').select('*, leads(name)').order('created_at', { ascending: false });
     const apptsRes = await supabase.from('appointments').select('*, leads(name)').order('appt_date', { ascending: true });
 
     allLeads = leadsRes.data || [];
+    
     renderBoard(allLeads);
     renderTasks(tasksRes.data || []);
     renderAppts(apptsRes.data || []);
     renderTagsNav(allLeads);
     updateSelects(allLeads);
     
+    // Update Top Counters
     document.getElementById('statLeads').innerText = allLeads.length;
-    document.getElementById('statTasks').innerText = (tasksRes.data || []).length;
+    document.getElementById('statTasks').innerText = (tasksRes.data || []).filter(t => !t.is_completed).length;
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
 }
 
-// --- PIPELINE KANBAN RENDERER ---
+// --- RENDERERS ---
+
+/**
+ * Render Kanban Board for Leads
+ */
 function renderBoard(list) {
     const filteredByTag = currentTagFilter === 'all' ? list : list.filter(l => (l.tags || []).includes(currentTagFilter));
     
@@ -65,7 +102,6 @@ function renderBoard(list) {
     const counts = { 'New': 0, 'Negotiating': 0, 'Closed': 0 };
 
     filteredByTag.forEach(l => {
-        // FALLBACK: Si no tiene status o el status no coincide, lo mandamos a New
         let status = l.status || 'New';
         if (!colIds[status]) status = 'New'; 
 
@@ -73,16 +109,16 @@ function renderBoard(list) {
         const colElement = document.getElementById(colIds[status]);
         
         const card = document.createElement('div');
-        card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-300 transition cursor-pointer group";
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-blue-400 transition cursor-pointer group";
         card.onclick = () => window.viewDetails(l.id);
         card.innerHTML = `
             <div class="flex justify-between items-start mb-2">
                 <p class="font-bold text-slate-800 text-sm">${l.name || 'Unnamed'}</p>
-                <span class="text-[8px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-bold uppercase tracking-tighter">${l.state || 'N/A'}</span>
+                <span class="text-[9px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-bold uppercase tracking-tighter">${l.state || 'N/A'}</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-mono mb-3">${l.phone || 'No phone'}</p>
+            <p class="text-[11px] text-slate-400 font-medium mb-3"><i class="fa fa-phone mr-1"></i> ${l.phone || 'No phone'}</p>
             <div class="flex flex-wrap gap-1">
-                ${(l.tags || []).map(t => `<span class="bg-slate-100 text-slate-500 text-[8px] px-1 py-0.5 rounded uppercase font-bold">#${t}</span>`).join('')}
+                ${(l.tags || []).map(t => `<span class="bg-blue-50 text-blue-500 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">#${t}</span>`).join('')}
             </div>
         `;
         colElement.appendChild(card);
@@ -93,20 +129,97 @@ function renderBoard(list) {
     document.getElementById('countClosed').innerText = counts['Closed'];
 }
 
-// --- SMART LISTS (TAGS) ---
+/**
+ * Handle Tags Navigation (Smart Lists) - Ensuring NO duplicates
+ */
 function renderTagsNav(data) {
-    const tags = [...new Set(data.flatMap(l => l.tags || []))];
-    const container = document.getElementById('tagNav');
-    container.innerHTML = tags.map(t => `<button onclick="window.filterByTag('${t}')" class="w-full text-left py-1.5 px-4 text-[11px] text-slate-500 hover:text-white uppercase font-bold tracking-widest italic transition"># ${t}</button>`).join('');
+    // Get unique tags from all leads
+    const allTagsRaw = data.flatMap(l => l.tags || []);
+    const uniqueTags = [...new Set(allTagsRaw.map(t => t.trim()).filter(t => t !== ""))];
+    
+    const container = document.getElementById('tagNavContainer');
+    container.innerHTML = uniqueTags.map(tag => `
+        <div onclick="window.filterByTag('${tag}')" id="navTag-${tag}" class="nav-item text-xs italic">
+            <i class="fa fa-hashtag"></i> ${tag.toUpperCase()}
+        </div>
+    `).join('');
 }
 
 window.filterByTag = (tag) => {
     currentTagFilter = tag;
+    window.showSection('Leads'); // Always go to board when filtering by tag
     document.getElementById('viewTitle').innerText = tag === 'all' ? "Lead Pipeline" : `List: ${tag}`;
+    
+    // Highlight active tag in sidebar
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    if(tag === 'all') document.getElementById('navTagAll').classList.add('active');
+    else document.getElementById(`navTag-${tag}`)?.classList.add('active');
+    
     renderBoard(allLeads);
 };
 
-// --- DETAILS & ACTIVITY ---
+/**
+ * Render Tasks with "Complete" logic
+ */
+function renderTasks(list) {
+    const pendingContainer = document.getElementById('tasksList');
+    const completedContainer = document.getElementById('tasksCompletedList');
+    pendingContainer.innerHTML = '';
+    completedContainer.innerHTML = '';
+
+    list.forEach(t => {
+        const taskCard = document.createElement('div');
+        taskCard.className = `task-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group ${t.is_completed ? 'completed' : ''}`;
+        taskCard.innerHTML = `
+            <div class="flex items-center gap-4">
+                <button onclick="window.toggleTaskStatus('${t.id}', ${t.is_completed})" 
+                        class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all 
+                        ${t.is_completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-blue-500 text-transparent hover:text-slate-300'}">
+                    <i class="fa fa-check text-[10px]"></i>
+                </button>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-700">${t.title}</h4>
+                    <p class="text-[10px] text-blue-500 font-bold uppercase mt-1">Lead: ${t.leads ? t.leads.name : 'General'}</p>
+                </div>
+            </div>
+            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                <button onclick="window.editTask('${t.id}')" class="text-slate-400 hover:text-blue-500"><i class="fa fa-edit"></i></button>
+                <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-400 hover:text-red-500"><i class="fa fa-trash"></i></button>
+            </div>
+        `;
+        
+        if(t.is_completed) completedContainer.appendChild(taskCard);
+        else pendingContainer.appendChild(taskCard);
+    });
+}
+
+window.toggleTaskStatus = async (id, currentStatus) => {
+    const { error } = await supabase.from('tasks').update({ is_completed: !currentStatus }).eq('id', id);
+    if (error) alert(error.message); else loadData();
+};
+
+function renderAppts(list) {
+    const container = document.getElementById('apptsList');
+    container.innerHTML = list.map(a => `
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-5">
+                <div class="bg-emerald-50 w-12 h-12 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div>
+                <div>
+                    <h4 class="font-bold text-slate-800 text-base">${a.title}</h4>
+                    <p class="text-xs text-slate-500 font-bold uppercase">Lead: ${a.leads ? a.leads.name : 'N/A'}</p>
+                    <p class="text-[11px] text-emerald-600 font-bold mt-1 uppercase"><i class="fa fa-clock mr-1"></i> ${new Date(a.appt_date).toLocaleString()}</p>
+                </div>
+            </div>
+            <div class="flex gap-4 px-4">
+                <button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit"></i></button>
+                <button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- CRUD OPERATIONS ---
+
 window.viewDetails = async (id) => {
     const lead = allLeads.find(l => l.id === id);
     if (!lead) return;
@@ -119,7 +232,6 @@ window.viewDetails = async (id) => {
     document.getElementById('eState').value = lead.state || "TX";
     document.getElementById('eStatus').value = lead.status || "New";
     document.getElementById('eTags').value = (lead.tags || []).join(', ');
-    document.getElementById('labelStatus').innerText = lead.status || "New";
     renderHistory(lead.notes);
 };
 
@@ -133,14 +245,17 @@ function renderHistory(fullText) {
 window.saveLeadUpdates = async () => {
     const id = document.getElementById('eId').value;
     const payload = {
-        name: document.getElementById('eName').value, phone: document.getElementById('ePhone').value,
-        email: document.getElementById('eEmail').value, address: document.getElementById('eAddress').value,
-        state: document.getElementById('eState').value, status: document.getElementById('eStatus').value,
+        name: document.getElementById('eName').value, 
+        phone: document.getElementById('ePhone').value,
+        email: document.getElementById('eEmail').value, 
+        address: document.getElementById('eAddress').value,
+        state: document.getElementById('eState').value, 
+        status: document.getElementById('eStatus').value,
         tags: document.getElementById('eTags').value.split(',').map(t => t.trim()).filter(t => t !== ""),
         last_activity: new Date().toISOString()
     };
     const { error } = await supabase.from('leads').update(payload).eq('id', id);
-    if (error) alert(error.message); else { loadData(); alert("Saved!"); }
+    if (error) alert(error.message); else { loadData(); alert("Changes Saved!"); }
 };
 
 window.addNote = async () => {
@@ -153,14 +268,12 @@ window.addNote = async () => {
     document.getElementById('newNote').value = ""; loadData(); window.viewDetails(id);
 };
 
-// --- CREATION ---
 document.getElementById('saveLeadBtn').onclick = async () => {
-    const timestamp = new Date().toLocaleString();
     const payload = { 
         name: document.getElementById('lName').value, phone: document.getElementById('lPhone').value, 
         email: document.getElementById('lEmail').value, address: document.getElementById('lAddress').value,
-        zip_code: document.getElementById('lZip').value, state: document.getElementById('lState').value,
-        notes: document.getElementById('lNotes').value ? `\n[${timestamp}]: ${document.getElementById('lNotes').value} ---` : "",
+        state: document.getElementById('lState').value,
+        notes: document.getElementById('lNotes').value ? `\n[${new Date().toLocaleString()}]: ${document.getElementById('lNotes').value} ---` : "",
         status: 'New', last_activity: new Date().toISOString() 
     };
     if(!payload.name || !payload.phone) return alert("Name/Phone required.");
@@ -170,37 +283,56 @@ document.getElementById('saveLeadBtn').onclick = async () => {
 
 document.getElementById('saveTaskBtn').onclick = async () => {
     const editId = document.getElementById('tEditId').value;
-    const payload = { title: document.getElementById('tTitle').value, priority: document.getElementById('tPriority').value, lead_id: document.getElementById('tLeadId').value || null, due_date: document.getElementById('tDate').value };
+    const payload = { 
+        title: document.getElementById('tTitle').value, 
+        priority: document.getElementById('tPriority').value, 
+        lead_id: document.getElementById('tLeadId').value || null, 
+        due_date: document.getElementById('tDate').value 
+    };
     const { error } = editId ? await supabase.from('tasks').update(payload).eq('id', editId) : await supabase.from('tasks').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('taskModal'); loadData(); }
 };
 
 document.getElementById('saveApptBtn').onclick = async () => {
     const editId = document.getElementById('aEditId').value;
-    const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
+    const payload = { 
+        title: document.getElementById('aTitle').value, 
+        appt_date: document.getElementById('aDate').value, 
+        lead_id: document.getElementById('aLeadId').value || null 
+    };
     const { error } = editId ? await supabase.from('appointments').update(payload).eq('id', editId) : await supabase.from('appointments').insert([payload]);
     if (error) alert(error.message); else { window.closeModal('apptModal'); loadData(); }
 };
 
-// --- RENDER TASKS/APPTS ---
-function renderTasks(list) {
-    const container = document.getElementById('tasksList');
-    container.innerHTML = list.map(t => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 border-l-4 ${t.priority === 'High' ? 'border-l-red-500' : 'border-l-blue-500'} shadow-sm"><div class="flex justify-between items-start mb-4"><span class="text-[10px] font-bold uppercase text-slate-400">${t.priority} Priority</span><div class="flex gap-2"><button onclick="window.editTask('${t.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit"></i></button><button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-check-circle text-xl"></i></button></div></div><h4 class="font-bold text-slate-800">${t.title}</h4><p class="text-[10px] text-blue-500 mt-2 uppercase font-bold italic">Lead: ${t.leads ? t.leads.name : 'General'}</p></div>`).join('');
-}
-
-function renderAppts(list) {
-    const container = document.getElementById('apptsList');
-    container.innerHTML = list.map(a => `<div class="bg-white p-6 rounded-[2rem] border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-6"><div class="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div><div><h4 class="font-bold text-slate-800 text-lg">${a.title}</h4><p class="text-xs text-slate-500 font-bold uppercase italic">Lead: ${a.leads ? a.leads.name : 'N/A'}</p><p class="text-[10px] text-emerald-600 font-bold mt-1 uppercase">${new Date(a.appt_date).toLocaleString()}</p></div></div><div class="flex gap-4 px-4"><button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit text-xl"></i></button><button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-trash text-xl"></i></button></div></div>`).join('');
-}
+// --- UTILS ---
 
 window.editTask = async (id) => {
     const { data: t } = await supabase.from('tasks').select('*').eq('id', id).single();
-    if(t) { document.getElementById('tEditId').value = t.id; document.getElementById('tTitle').value = t.title; document.getElementById('tPriority').value = t.priority; document.getElementById('tLeadId').value = t.lead_id || ""; document.getElementById('tDate').value = t.due_date || ""; document.getElementById('taskTitleHeader').innerText = "Edit Task"; window.openModal('taskModal'); }
+    if(t) { 
+        document.getElementById('tEditId').value = t.id; 
+        document.getElementById('tTitle').value = t.title; 
+        document.getElementById('tPriority').value = t.priority; 
+        document.getElementById('tLeadId').value = t.lead_id || ""; 
+        document.getElementById('tDate').value = t.due_date || ""; 
+        document.getElementById('taskTitleHeader').innerText = "Edit Task"; 
+        window.openModal('taskModal'); 
+    }
 };
 
 window.editAppt = async (id) => {
     const { data: a } = await supabase.from('appointments').select('*').eq('id', id).single();
-    if(a) { document.getElementById('aEditId').value = a.id; document.getElementById('aTitle').value = a.title; document.getElementById('aLeadId').value = a.lead_id || ""; if(a.appt_date) { const d = new Date(a.appt_date); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); document.getElementById('aDate').value = d.toISOString().slice(0, 16); } document.getElementById('apptTitleHeader').innerText = "Edit Appt"; window.openModal('apptModal'); }
+    if(a) { 
+        document.getElementById('aEditId').value = a.id; 
+        document.getElementById('aTitle').value = a.title; 
+        document.getElementById('aLeadId').value = a.lead_id || ""; 
+        if(a.appt_date) {
+            const d = new Date(a.appt_date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            document.getElementById('aDate').value = d.toISOString().slice(0, 16);
+        }
+        document.getElementById('apptTitleHeader').innerText = "Edit Appointment"; 
+        window.openModal('apptModal'); 
+    }
 };
 
 function updateSelects(leads) {
@@ -209,20 +341,6 @@ function updateSelects(leads) {
     document.getElementById('aLeadId').innerHTML = options;
 }
 
-document.getElementById('csvFileInput').onchange = function(e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-        const rows = ev.target.result.split('\n').slice(1);
-        const data = rows.filter(r => r.trim()).map(r => {
-            const cols = r.split(',');
-            return { name: cols[0], phone: cols[1], status: 'New', last_activity: new Date().toISOString() };
-        });
-        await supabase.from('leads').insert(data); loadData();
-    };
-    reader.readAsText(file);
-};
-
-window.deleteItem = async (table, id) => { if (confirm("Delete?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
+window.deleteItem = async (table, id) => { if (confirm("Are you sure you want to delete this?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
 
 init();
