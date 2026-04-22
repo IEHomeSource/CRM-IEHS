@@ -3,27 +3,20 @@ import { supabase } from './config.js';
 let allLeads = [];
 let currentTagFilter = 'all';
 
-// --- NAVIGATION & UI ENGINE ---
-
-/**
- * Handle navigation between main sections and update header buttons
- * @param {string} name - The section name (Leads, Tasks, Calendar)
- */
+// --- CORE NAVIGATION EXPOSURE ---
+// We must attach functions to window because this is a module
 window.showSection = (name) => {
-    // Hide all sections
+    console.log("Navigating to:", name);
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    // Remove active style from all nav items
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     
-    // Show selected section
     document.getElementById('section' + name).classList.add('active');
     document.getElementById('nav' + name).classList.add('active');
     
-    // Update Header Title
-    const titleMap = { 'Leads': 'Lead Pipeline', 'Tasks': 'Task Management', 'Calendar': 'Appointments' };
-    document.getElementById('viewTitle').innerText = titleMap[name];
-
-    // Show/Hide Header Action Buttons based on section
+    // Update Header
+    document.getElementById('viewTitle').innerText = (name === 'Leads') ? 'Lead Pipeline' : name;
+    
+    // Header Buttons logic
     document.getElementById('btnNewLead').classList.add('hidden');
     document.getElementById('btnNewTask').classList.add('hidden');
     document.getElementById('btnNewAppt').classList.add('hidden');
@@ -42,14 +35,14 @@ window.openModal = (id) => {
 };
 
 window.closeModal = (id) => {
+    document.getElementById(id).classList.add('hidden');
     if(id === 'taskModal') document.getElementById('tEditId').value = "";
     if(id === 'apptModal') document.getElementById('aEditId').value = "";
-    document.getElementById(id).classList.add('hidden');
 };
 
 window.logout = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
-// --- DATA INITIALIZATION ---
+// --- DATA ENGINE ---
 
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -57,7 +50,7 @@ async function init() {
     
     loadData();
 
-    // Search functionality
+    // Search bar logic
     document.getElementById('searchInput').oninput = (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = allLeads.filter(l => 
@@ -66,10 +59,32 @@ async function init() {
         );
         renderBoard(filtered);
     };
+
+    // RESTORED EXCEL LOGIC
+    document.getElementById('csvFileInput').onchange = function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            const rows = ev.target.result.split('\n').slice(1);
+            const dataToInsert = rows.filter(r => r.trim()).map(r => {
+                const cols = r.split(',');
+                return { 
+                    name: cols[0], 
+                    phone: cols[1], 
+                    email: cols[2] || '', 
+                    status: 'New', 
+                    last_activity: new Date().toISOString() 
+                };
+            });
+            const { error } = await supabase.from('leads').insert(dataToInsert);
+            if (error) alert("Excel Error: " + error.message);
+            else { alert("Import Successful!"); loadData(); }
+        };
+        reader.readAsText(file);
+    };
 }
 
 async function loadData() {
-    // Fetch all data from Supabase
     const leadsRes = await supabase.from('leads').select('*').order('last_activity', { ascending: false });
     const tasksRes = await supabase.from('tasks').select('*, leads(name)').order('created_at', { ascending: false });
     const apptsRes = await supabase.from('appointments').select('*, leads(name)').order('appt_date', { ascending: true });
@@ -82,7 +97,6 @@ async function loadData() {
     renderTagsNav(allLeads);
     updateSelects(allLeads);
     
-    // Update Top Counters
     document.getElementById('statLeads').innerText = allLeads.length;
     document.getElementById('statTasks').innerText = (tasksRes.data || []).filter(t => !t.is_completed).length;
     document.getElementById('statAppts').innerText = (apptsRes.data || []).length;
@@ -90,38 +104,32 @@ async function loadData() {
 
 // --- RENDERERS ---
 
-/**
- * Render Kanban Board for Leads
- */
 function renderBoard(list) {
-    const filteredByTag = currentTagFilter === 'all' ? list : list.filter(l => (l.tags || []).includes(currentTagFilter));
-    
+    const filtered = currentTagFilter === 'all' ? list : list.filter(l => (l.tags || []).includes(currentTagFilter));
     const colIds = { 'New': 'colNew', 'Negotiating': 'colNegotiating', 'Closed': 'colClosed' };
     Object.values(colIds).forEach(id => document.getElementById(id).innerHTML = '');
     
     const counts = { 'New': 0, 'Negotiating': 0, 'Closed': 0 };
 
-    filteredByTag.forEach(l => {
+    filtered.forEach(l => {
         let status = l.status || 'New';
         if (!colIds[status]) status = 'New'; 
-
         counts[status]++;
-        const colElement = document.getElementById(colIds[status]);
-        
+
         const card = document.createElement('div');
         card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-blue-400 transition cursor-pointer group";
         card.onclick = () => window.viewDetails(l.id);
         card.innerHTML = `
             <div class="flex justify-between items-start mb-2">
                 <p class="font-bold text-slate-800 text-sm">${l.name || 'Unnamed'}</p>
-                <span class="text-[9px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-bold uppercase tracking-tighter">${l.state || 'N/A'}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-black uppercase">${l.state || '--'}</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-medium mb-3"><i class="fa fa-phone mr-1"></i> ${l.phone || 'No phone'}</p>
+            <p class="text-[10px] text-slate-400 font-bold mb-3"><i class="fa fa-phone mr-1"></i> ${l.phone || 'No phone'}</p>
             <div class="flex flex-wrap gap-1">
-                ${(l.tags || []).map(t => `<span class="bg-blue-50 text-blue-500 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">#${t}</span>`).join('')}
+                ${(l.tags || []).map(t => `<span class="bg-blue-50 text-blue-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">#${t}</span>`).join('')}
             </div>
         `;
-        colElement.appendChild(card);
+        document.getElementById(colIds[status]).appendChild(card);
     });
 
     document.getElementById('countNew').innerText = counts['New'];
@@ -129,88 +137,72 @@ function renderBoard(list) {
     document.getElementById('countClosed').innerText = counts['Closed'];
 }
 
-/**
- * Handle Tags Navigation (Smart Lists) - Ensuring NO duplicates
- */
 function renderTagsNav(data) {
-    // Get unique tags from all leads
-    const allTagsRaw = data.flatMap(l => l.tags || []);
-    const uniqueTags = [...new Set(allTagsRaw.map(t => t.trim()).filter(t => t !== ""))];
+    const allTags = data.flatMap(l => l.tags || []);
+    const uniqueTags = [...new Set(allTags.map(t => t.trim()).filter(t => t !== ""))];
     
     const container = document.getElementById('tagNavContainer');
     container.innerHTML = uniqueTags.map(tag => `
-        <div onclick="window.filterByTag('${tag}')" id="navTag-${tag}" class="nav-item text-xs italic">
-            <i class="fa fa-hashtag"></i> ${tag.toUpperCase()}
+        <div onclick="window.filterByTag('${tag}')" id="navTag-${tag}" class="nav-item text-xs font-bold uppercase italic">
+            <i class="fa fa-hashtag"></i> ${tag}
         </div>
     `).join('');
 }
 
 window.filterByTag = (tag) => {
     currentTagFilter = tag;
-    window.showSection('Leads'); // Always go to board when filtering by tag
-    document.getElementById('viewTitle').innerText = tag === 'all' ? "Lead Pipeline" : `List: ${tag}`;
-    
-    // Highlight active tag in sidebar
+    window.showSection('Leads');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     if(tag === 'all') document.getElementById('navTagAll').classList.add('active');
     else document.getElementById(`navTag-${tag}`)?.classList.add('active');
-    
     renderBoard(allLeads);
 };
 
-/**
- * Render Tasks with "Complete" logic
- */
 function renderTasks(list) {
-    const pendingContainer = document.getElementById('tasksList');
-    const completedContainer = document.getElementById('tasksCompletedList');
-    pendingContainer.innerHTML = '';
-    completedContainer.innerHTML = '';
+    const pending = document.getElementById('tasksList');
+    const completed = document.getElementById('tasksCompletedList');
+    pending.innerHTML = ''; completed.innerHTML = '';
 
     list.forEach(t => {
-        const taskCard = document.createElement('div');
-        taskCard.className = `task-card bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group ${t.is_completed ? 'completed' : ''}`;
-        taskCard.innerHTML = `
+        const div = document.createElement('div');
+        div.className = `bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group ${t.is_completed ? 'opacity-60' : ''}`;
+        div.innerHTML = `
             <div class="flex items-center gap-4">
-                <button onclick="window.toggleTaskStatus('${t.id}', ${t.is_completed})" 
-                        class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all 
-                        ${t.is_completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-blue-500 text-transparent hover:text-slate-300'}">
+                <button onclick="window.toggleTaskStatus('${t.id}', ${t.is_completed})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${t.is_completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent hover:text-slate-200'}">
                     <i class="fa fa-check text-[10px]"></i>
                 </button>
                 <div>
-                    <h4 class="text-sm font-bold text-slate-700">${t.title}</h4>
-                    <p class="text-[10px] text-blue-500 font-bold uppercase mt-1">Lead: ${t.leads ? t.leads.name : 'General'}</p>
+                    <h4 class="text-sm font-bold text-slate-700 ${t.is_completed ? 'line-through' : ''}">${t.title}</h4>
+                    <p class="text-[9px] text-blue-500 font-black uppercase">Lead: ${t.leads ? t.leads.name : 'General'}</p>
                 </div>
             </div>
             <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
                 <button onclick="window.editTask('${t.id}')" class="text-slate-400 hover:text-blue-500"><i class="fa fa-edit"></i></button>
-                <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-400 hover:text-red-500"><i class="fa fa-trash"></i></button>
+                <button onclick="window.deleteItem('tasks', '${t.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-trash"></i></button>
             </div>
         `;
-        
-        if(t.is_completed) completedContainer.appendChild(taskCard);
-        else pendingContainer.appendChild(taskCard);
+        if(t.is_completed) completed.appendChild(div); else pending.appendChild(div);
     });
 }
 
-window.toggleTaskStatus = async (id, currentStatus) => {
-    const { error } = await supabase.from('tasks').update({ is_completed: !currentStatus }).eq('id', id);
-    if (error) alert(error.message); else loadData();
+window.toggleTaskStatus = async (id, current) => {
+    await supabase.from('tasks').update({ is_completed: !current }).eq('id', id);
+    loadData();
 };
 
 function renderAppts(list) {
     const container = document.getElementById('apptsList');
     container.innerHTML = list.map(a => `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-emerald-300 transition">
             <div class="flex items-center gap-5">
-                <div class="bg-emerald-50 w-12 h-12 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100"><i class="fa fa-calendar-check text-xl"></i></div>
+                <div class="bg-emerald-50 w-12 h-12 rounded-xl flex items-center justify-center text-emerald-600"><i class="fa fa-calendar-day text-xl"></i></div>
                 <div>
-                    <h4 class="font-bold text-slate-800 text-base">${a.title}</h4>
-                    <p class="text-xs text-slate-500 font-bold uppercase">Lead: ${a.leads ? a.leads.name : 'N/A'}</p>
-                    <p class="text-[11px] text-emerald-600 font-bold mt-1 uppercase"><i class="fa fa-clock mr-1"></i> ${new Date(a.appt_date).toLocaleString()}</p>
+                    <h4 class="font-black text-slate-800 text-base uppercase italic tracking-tighter">${a.title}</h4>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Lead: ${a.leads ? a.leads.name : 'N/A'}</p>
+                    <p class="text-[11px] text-emerald-600 font-black mt-1 uppercase italic">${new Date(a.appt_date).toLocaleString()}</p>
                 </div>
             </div>
-            <div class="flex gap-4 px-4">
+            <div class="flex gap-4">
                 <button onclick="window.editAppt('${a.id}')" class="text-slate-300 hover:text-blue-500"><i class="fa fa-edit"></i></button>
                 <button onclick="window.deleteItem('appointments', '${a.id}')" class="text-slate-300 hover:text-red-500"><i class="fa fa-trash"></i></button>
             </div>
@@ -237,9 +229,9 @@ window.viewDetails = async (id) => {
 
 function renderHistory(fullText) {
     const container = document.getElementById('notesHistory');
-    if (!fullText) { container.innerHTML = "<p class='text-xs text-slate-300 italic'>No logs.</p>"; return; }
-    const notesArray = fullText.split('---').filter(n => n.trim() !== "");
-    container.innerHTML = notesArray.reverse().map(n => `<div class="py-3 text-[12px] text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">${n.trim()}</div>`).join('');
+    if (!fullText) { container.innerHTML = "<p class='text-[10px] text-slate-300 italic'>No activity logs.</p>"; return; }
+    const notes = fullText.split('---').filter(n => n.trim() !== "");
+    container.innerHTML = notes.reverse().map(n => `<div class="py-3 text-[11px] text-slate-600 leading-relaxed font-medium">${n.trim()}</div>`).join('');
 }
 
 window.saveLeadUpdates = async () => {
@@ -255,18 +247,20 @@ window.saveLeadUpdates = async () => {
         last_activity: new Date().toISOString()
     };
     const { error } = await supabase.from('leads').update(payload).eq('id', id);
-    if (error) alert(error.message); else { loadData(); alert("Changes Saved!"); }
+    if (error) alert(error.message); else { alert("Lead Updated!"); loadData(); }
 };
 
 window.addNote = async () => {
     const id = document.getElementById('eId').value;
     const lead = allLeads.find(l => l.id === id);
-    const newNoteText = document.getElementById('newNote').value;
-    if (!newNoteText) return;
-    const updatedNotes = (lead.notes || "") + `\n[${new Date().toLocaleString()}]: ${newNoteText} ---`;
-    await supabase.from('leads').update({ notes: updatedNotes, last_activity: new Date().toISOString() }).eq('id', id);
+    const text = document.getElementById('newNote').value;
+    if (!text) return;
+    const updated = (lead.notes || "") + `\n[${new Date().toLocaleString()}]: ${text} ---`;
+    await supabase.from('leads').update({ notes: updated, last_activity: new Date().toISOString() }).eq('id', id);
     document.getElementById('newNote').value = ""; loadData(); window.viewDetails(id);
 };
+
+// --- CREATION HANDLERS ---
 
 document.getElementById('saveLeadBtn').onclick = async () => {
     const payload = { 
@@ -277,31 +271,24 @@ document.getElementById('saveLeadBtn').onclick = async () => {
         status: 'New', last_activity: new Date().toISOString() 
     };
     if(!payload.name || !payload.phone) return alert("Name/Phone required.");
-    const { error } = await supabase.from('leads').insert([payload]);
-    if (error) alert(error.message); else { window.closeModal('leadModal'); loadData(); }
+    await supabase.from('leads').insert([payload]);
+    window.closeModal('leadModal'); loadData();
 };
 
 document.getElementById('saveTaskBtn').onclick = async () => {
-    const editId = document.getElementById('tEditId').value;
-    const payload = { 
-        title: document.getElementById('tTitle').value, 
-        priority: document.getElementById('tPriority').value, 
-        lead_id: document.getElementById('tLeadId').value || null, 
-        due_date: document.getElementById('tDate').value 
-    };
-    const { error } = editId ? await supabase.from('tasks').update(payload).eq('id', editId) : await supabase.from('tasks').insert([payload]);
-    if (error) alert(error.message); else { window.closeModal('taskModal'); loadData(); }
+    const id = document.getElementById('tEditId').value;
+    const payload = { title: document.getElementById('tTitle').value, priority: document.getElementById('tPriority').value, lead_id: document.getElementById('tLeadId').value || null, due_date: document.getElementById('tDate').value };
+    if(id) await supabase.from('tasks').update(payload).eq('id', id);
+    else await supabase.from('tasks').insert([payload]);
+    window.closeModal('taskModal'); loadData();
 };
 
 document.getElementById('saveApptBtn').onclick = async () => {
-    const editId = document.getElementById('aEditId').value;
-    const payload = { 
-        title: document.getElementById('aTitle').value, 
-        appt_date: document.getElementById('aDate').value, 
-        lead_id: document.getElementById('aLeadId').value || null 
-    };
-    const { error } = editId ? await supabase.from('appointments').update(payload).eq('id', editId) : await supabase.from('appointments').insert([payload]);
-    if (error) alert(error.message); else { window.closeModal('apptModal'); loadData(); }
+    const id = document.getElementById('aEditId').value;
+    const payload = { title: document.getElementById('aTitle').value, appt_date: document.getElementById('aDate').value, lead_id: document.getElementById('aLeadId').value || null };
+    if(id) await supabase.from('appointments').update(payload).eq('id', id);
+    else await supabase.from('appointments').insert([payload]);
+    window.closeModal('apptModal'); loadData();
 };
 
 // --- UTILS ---
@@ -330,7 +317,7 @@ window.editAppt = async (id) => {
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
             document.getElementById('aDate').value = d.toISOString().slice(0, 16);
         }
-        document.getElementById('apptTitleHeader').innerText = "Edit Appointment"; 
+        document.getElementById('apptTitleHeader').innerText = "Edit Appt"; 
         window.openModal('apptModal'); 
     }
 };
@@ -341,6 +328,6 @@ function updateSelects(leads) {
     document.getElementById('aLeadId').innerHTML = options;
 }
 
-window.deleteItem = async (table, id) => { if (confirm("Are you sure you want to delete this?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
+window.deleteItem = async (table, id) => { if (confirm("Delete this?")) { await supabase.from(table).delete().eq('id', id); loadData(); } };
 
 init();
